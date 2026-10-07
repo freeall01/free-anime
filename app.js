@@ -109,5 +109,16 @@ function switchServer(serverName) {
 
 function closePlayer() {
     videoFrame.src = '';
-    videoModal.classList.add('hidden
-                             
+    videoModal.classList.add('hidden');
+}
+
+let searchTimer;
+searchInput.addEventListener('input', (e) => {
+    clearTimeout(searchTimer);
+    const query = e.target.value.trim();
+    searchTimer = setTimeout(() => {
+        fetchAnime(query);
+    }, 500);
+});
+
+fetchAnime();
