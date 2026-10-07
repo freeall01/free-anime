@@ -3,18 +3,10 @@ const animeGrid = document.getElementById('animeGrid');
 const searchInput = document.getElementById('searchInput');
 const videoModal = document.getElementById('videoModal');
 const modalTitle = document.getElementById('modalTitle');
-
-// Create a native HTML5 video player container dynamically inside the modal
-const modalBody = videoModal.querySelector('.relative.w-full') || videoModal.querySelector('div > div:nth-child(2)');
-modalBody.innerHTML = `
-    <div id="playerContainer" class="w-full h-full flex flex-col items-center justify-center bg-black">
-        <video id="nativeVideoPlayer" controls class="w-full h-full max-h-[70vh] object-contain" poster=""></video>
-        <div id="playerMessage" class="absolute text-sm text-slate-300 bg-slate-900/80 px-4 py-2 rounded-lg">Select an episode or stream source below</div>
-    </div>
-`;
-
 const nativeVideoPlayer = document.getElementById('nativeVideoPlayer');
 const playerMessage = document.getElementById('playerMessage');
+
+let hlsInstance = null;
 
 async function fetchAnime(searchQuery = '') {
     animeGrid.innerHTML = '<div class="col-span-full text-center py-20 text-slate-400">Loading anime catalog...</div>';
@@ -83,7 +75,7 @@ function displayAnime(animeList) {
                 </div>
                 <div class="p-3 pt-0">
                     <button onclick="playNativeAnime(${anime.id}, '${title.replace(/'/g, "")}', '${imageUrl}')" class="block w-full text-center bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold py-2 rounded-lg transition">
-                        ▶ Watch on Site
+                        ▶ Watch Video
                     </button>
                 </div>
             </div>
@@ -94,32 +86,39 @@ function displayAnime(animeList) {
 function playNativeAnime(id, title, posterUrl) {
     modalTitle.innerText = `Now Playing: ${title}`;
     videoModal.classList.remove('hidden');
-    
     nativeVideoPlayer.poster = posterUrl;
-    playerMessage.innerText = "Connecting to direct streaming stream nodes...";
-    
-    // Fetching direct stream source from open-source community mapping API
-    fetch(`https://api.amvstr.ml/api/v2/stream/${id}`)
-        .then(res => res.json())
-        .then(data => {
-            if (data && data.streamingLink) {
-                nativeVideoPlayer.src = data.streamingLink;
-                playerMessage.innerText = "";
-                nativeVideoPlayer.play().catch(e => {
-                    playerMessage.innerText = "Tap play button on the video player to start.";
-                });
-            } else {
-                throw new Error("Stream link not found");
-            }
-        })
-        .catch(err => {
-            // Fallback direct stream loader using alternative public instance
-            nativeVideoPlayer.src = `https://corsproxy.io/?https://anime-k-api.vercel.app/watch/${id}-episode-1`;
-            playerMessage.innerText = "Stream loaded via backup node. Click play.";
+    playerMessage.innerText = "Connecting to stream server...";
+
+    const streamUrl = `https://corsproxy.io/?https://anime-k-api.vercel.app/watch/${id}-episode-1`;
+
+    if (hlsInstance) {
+        hlsInstance.destroy();
+    }
+
+    if (Hls.isSupported()) {
+        hlsInstance = new Hls();
+        hlsInstance.loadSource(streamUrl);
+        hlsInstance.attachMedia(nativeVideoPlayer);
+        hlsInstance.on(Hls.Events.MANIFEST_PARSED, function() {
+            playerMessage.innerText = "";
+            nativeVideoPlayer.play().catch(e => {
+                playerMessage.innerText = "Tap play button to start video.";
+            });
         });
+        hlsInstance.on(Hls.Events.ERROR, function(event, data) {
+            playerMessage.innerText = "Stream playback error. Try another anime.";
+        });
+    } else if (nativeVideoPlayer.canPlayType('application/vnd.apple.mpegurl')) {
+        nativeVideoPlayer.src = streamUrl;
+        playerMessage.innerText = "";
+        nativeVideoPlayer.play();
+    }
 }
 
 function closePlayer() {
+    if (hlsInstance) {
+        hlsInstance.destroy();
+    }
     nativeVideoPlayer.pause();
     nativeVideoPlayer.src = '';
     videoModal.classList.add('hidden');
