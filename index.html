@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FREE-ANIME - The Ultimate Catalog</title>
+    <title>FREE-ANIME - The Ultimate Anime Finder</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen font-sans selection:bg-rose-500 selection:text-white">
@@ -24,19 +24,19 @@
         </div>
     </main>
 
-    <!-- Resilient Routing Modal -->
+    <!-- Dynamic Search Aggregator Modal -->
     <div id="videoModal" class="fixed inset-0 bg-black/95 z-50 hidden flex flex-col justify-center items-center p-4 backdrop-blur-md">
         <div class="w-full max-w-md bg-slate-900 rounded-2xl overflow-hidden border border-slate-700 shadow-2xl flex flex-col p-6 text-center">
             
             <h3 id="modalTitle" class="text-lg font-black text-white mb-2 line-clamp-1">Anime Title</h3>
-            <p class="text-sm text-slate-400 mb-6">Select an active proxy server to watch. These links open safely in a new tab to bypass ISP restrictions.</p>
+            <p class="text-sm text-slate-400 mb-6">Select a search engine below to instantly find working, unblocked streaming links for this anime.</p>
             
             <div id="routingButtons" class="flex flex-col gap-3 w-full mb-6">
-                <!-- Buttons injected by JS -->
+                <!-- Dynamic Buttons Injected Here -->
             </div>
 
             <button onclick="closeModal()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-lg transition">
-                Cancel
+                ✕ Cancel
             </button>
         </div>
     </div>
