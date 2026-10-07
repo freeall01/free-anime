@@ -1,12 +1,6 @@
 const ANILIST_API = 'https://graphql.anilist.co';
 const animeGrid = document.getElementById('animeGrid');
 const searchInput = document.getElementById('searchInput');
-const videoModal = document.getElementById('videoModal');
-const videoFrame = document.getElementById('videoFrame');
-const modalTitle = document.getElementById('modalTitle');
-
-let currentAnimeId = null;
-let currentAnimeTitle = '';
 
 async function fetchAnime(searchQuery = '') {
     animeGrid.innerHTML = '<div class="col-span-full text-center py-20 text-slate-400">Loading anime catalog...</div>';
@@ -61,6 +55,10 @@ function displayAnime(animeList) {
         const score = anime.averageScore ? (anime.averageScore / 10).toFixed(1) : 'N/A';
         const episodes = anime.episodes ? `${anime.episodes} Eps` : 'Ongoing';
         
+        // Direct working streaming server redirect links
+        const serverOne = `https://vidlink.pro/anime/${anime.id}`;
+        const serverTwo = `https://vidsrc.me/embed/anime?anilist=${anime.id}`;
+        
         animeGrid.innerHTML += `
             <div class="bg-slate-900 rounded-xl overflow-hidden border border-slate-800 flex flex-col justify-between shadow-lg hover:border-slate-700 transition">
                 <div>
@@ -73,49 +71,17 @@ function displayAnime(animeList) {
                         <p class="text-xs text-slate-400 mt-1">Status: <span class="text-rose-400">${episodes}</span></p>
                     </div>
                 </div>
-                <div class="p-3 pt-0">
-                    <button onclick="playAnime(${anime.id}, '${title.replace(/'/g, "")}')" class="block w-full text-center bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold py-2.5 rounded-lg transition shadow">
-                        ▶ Watch Video
-                    </button>
+                <div class="p-3 pt-0 flex flex-col gap-2">
+                    <a href="${serverOne}" target="_blank" class="block w-full text-center bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold py-2.5 rounded-lg transition shadow">
+                        ▶ Watch Server 1
+                    </a>
+                    <a href="${serverTwo}" target="_blank" class="block w-full text-center bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold py-2.5 rounded-lg transition">
+                        ▶ Watch Server 2
+                    </a>
                 </div>
             </div>
         `;
     });
-}
-
-function playAnime(id, title) {
-    currentAnimeId = id;
-    currentAnimeTitle = title;
-    modalTitle.innerText = `Streaming: ${title}`;
-    
-    switchServer('vidlink');
-    videoModal.classList.remove('hidden');
-}
-
-function switchServer(serverName) {
-    const btn1 = document.getElementById('btn-vidlink');
-    const btn2 = document.getElementById('btn-vidsrc');
-    const btn3 = document.getElementById('btn-multiembed');
-
-    [btn1, btn2, btn3].forEach(btn => {
-        if (btn) btn.className = 'px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition';
-    });
-
-    if (serverName === 'vidlink') {
-        videoFrame.src = `https://vidlink.pro/anime/${currentAnimeId}/1/1`;
-        if (btn1) btn1.className = 'px-3 py-1.5 rounded-lg bg-rose-600 text-white font-semibold whitespace-nowrap transition shadow';
-    } else if (serverName === 'vidsrc') {
-        videoFrame.src = `https://vidsrc.cc/v2/embed/anime/${currentAnimeId}`;
-        if (btn2) btn2.className = 'px-3 py-1.5 rounded-lg bg-rose-600 text-white font-semibold whitespace-nowrap transition shadow';
-    } else if (serverName === 'multiembed') {
-        videoFrame.src = `https://iframe.anikasu.com/embed/${currentAnimeId}`;
-        if (btn3) btn3.className = 'px-3 py-1.5 rounded-lg bg-rose-600 text-white font-semibold transition shadow';
-    }
-}
-
-function closePlayer() {
-    videoFrame.src = '';
-    videoModal.classList.add('hidden');
 }
 
 let searchTimer;
