@@ -55,9 +55,9 @@ function displayAnime(animeList) {
         const score = anime.averageScore ? (anime.averageScore / 10).toFixed(1) : 'N/A';
         const episodes = anime.episodes ? `${anime.episodes} Eps` : 'Ongoing';
         
-        // Direct working streaming server redirect links
-        const serverOne = `https://vidlink.pro/anime/${anime.id}`;
-        const serverTwo = `https://vidsrc.me/embed/anime?anilist=${anime.id}`;
+        // Direct working streaming redirect links
+        const serverOne = `https://animepahe.ru/search?q=${encodeURIComponent(title)}`;
+        const serverTwo = `https://gogoanimehd.io//search.html?keyword=${encodeURIComponent(title)}`;
         
         animeGrid.innerHTML += `
             <div class="bg-slate-900 rounded-xl overflow-hidden border border-slate-800 flex flex-col justify-between shadow-lg hover:border-slate-700 transition">
@@ -73,10 +73,10 @@ function displayAnime(animeList) {
                 </div>
                 <div class="p-3 pt-0 flex flex-col gap-2">
                     <a href="${serverOne}" target="_blank" class="block w-full text-center bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold py-2.5 rounded-lg transition shadow">
-                        ▶ Watch Server 1
+                        ▶ Watch on Server 1
                     </a>
                     <a href="${serverTwo}" target="_blank" class="block w-full text-center bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold py-2.5 rounded-lg transition">
-                        ▶ Watch Server 2
+                        ▶ Watch on Server 2
                     </a>
                 </div>
             </div>
