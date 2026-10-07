@@ -5,7 +5,6 @@ const videoModal = document.getElementById('videoModal');
 const modalTitle = document.getElementById('modalTitle');
 const routingButtons = document.getElementById('routingButtons');
 
-// 1. Fetch Anime Metadata from AniList
 async function fetchAnime(searchQuery = '') {
     animeGrid.innerHTML = '<div class="col-span-full text-center py-20 text-slate-400">Loading catalog...</div>';
 
@@ -68,7 +67,7 @@ function displayAnime(animeList) {
                     <h3 class="text-sm font-bold text-slate-100 line-clamp-1 mb-1">${title}</h3>
                     <p class="text-xs text-slate-400 mb-3">Status: <span class="text-rose-400 font-medium">${episodes}</span></p>
                     <button onclick="openRoutingModal('${title.replace(/'/g, "")}')" class="block w-full bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold py-2.5 rounded-lg transition shadow">
-                        ▶ Watch Options
+                        ▶ Find Streams
                     </button>
                 </div>
             </div>
@@ -76,27 +75,30 @@ function displayAnime(animeList) {
     });
 }
 
-// 2. Unblockable Routing System
 function openRoutingModal(title) {
     modalTitle.innerText = title;
     
     // Clean title for URL generation
     const cleanTitle = encodeURIComponent(title);
     
-    // The 3 most resilient Anime sites that survived the 2026 purges
-    const yugenUrl = `https://yugenanime.tv/search/?q=${cleanTitle}`;
-    const paheUrl = `https://animepahe.ru/search?q=${cleanTitle}`;
-    const zoroxUrl = `https://zoroxtv.to/search?keyword=${cleanTitle}`;
+    // 1. DuckDuckGo (Does not filter out piracy sites like Google does)
+    const ddgUrl = `https://duckduckgo.com/?q=watch+${cleanTitle}+anime+free+online`;
+    
+    // 2. Yandex Search (Completely ignores DMCA takedowns)
+    const yandexUrl = `https://yandex.com/search/?text=watch+${cleanTitle}+anime+free`;
+    
+    // 3. Crunchyroll (Legal fallback)
+    const crunchyUrl = `https://www.crunchyroll.com/search?q=${cleanTitle}`;
 
     routingButtons.innerHTML = `
-        <a href="${yugenUrl}" target="_blank" class="w-full bg-rose-600 hover:bg-rose-500 text-white font-bold py-3 rounded-lg text-sm flex items-center justify-center gap-2 transition">
-            <span>▶ Watch on YugenAnime</span> <span class="text-xs opacity-75">⧉</span>
+        <a href="${ddgUrl}" target="_blank" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-lg text-sm flex items-center justify-center gap-2 transition">
+            <span>▶ Web Search (Uncensored)</span> <span class="text-xs opacity-75">⧉</span>
         </a>
-        <a href="${paheUrl}" target="_blank" class="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-lg text-sm flex items-center justify-center gap-2 transition">
-            <span>▶ Watch on AnimePahe</span> <span class="text-xs opacity-75">⧉</span>
+        <a href="${yandexUrl}" target="_blank" class="w-full bg-rose-600 hover:bg-rose-500 text-white font-bold py-3 rounded-lg text-sm flex items-center justify-center gap-2 transition">
+            <span>▶ Deep Search (Bypass Blocks)</span> <span class="text-xs opacity-75">⧉</span>
         </a>
-        <a href="${zoroxUrl}" target="_blank" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-3 rounded-lg text-sm border border-slate-600 flex items-center justify-center gap-2 transition">
-            <span>▶ Watch on ZoroX</span> <span class="text-xs opacity-75">⧉</span>
+        <a href="${crunchyUrl}" target="_blank" class="w-full bg-orange-500 hover:bg-orange-400 text-white font-bold py-3 rounded-lg text-sm border border-orange-400 flex items-center justify-center gap-2 transition">
+            <span>▶ Check Crunchyroll</span> <span class="text-xs opacity-75">⧉</span>
         </a>
     `;
     
