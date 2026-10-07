@@ -38,25 +38,20 @@
                 <span class="font-bold text-rose-400">⚠️ NOTE:</span> If the video is black or shows an error, your ISP is blocking it. Please use 1.1.1.1 or a VPN.
             </div>
 
-            <!-- Server & Episode Controls -->
+          <!-- Server & Episode Controls -->
             <div class="flex items-center gap-3 px-4 py-2.5 bg-slate-900/90 border-b border-slate-800 text-xs overflow-x-auto">
                 <div class="flex items-center gap-1 shrink-0">
                     <span class="text-slate-400 font-medium">Ep:</span>
                     <input type="number" id="epInput" value="1" min="1" onchange="updateStream()" class="w-12 bg-slate-950 text-rose-400 font-bold rounded px-1 py-1.5 outline-none text-center border border-slate-700 focus:border-rose-500">
                 </div>
                 <div class="w-px h-6 bg-slate-700 shrink-0"></div>
-                <span class="text-slate-400 font-medium shrink-0">Servers:</span>
-                <button onclick="switchServer('vidsrccc')" id="btn-vidsrccc" class="px-3 py-1.5 rounded-lg bg-rose-600 text-white font-semibold whitespace-nowrap transition shadow shrink-0">Server 1 (CC)</button>
-                <button onclick="switchServer('vidsrcxyz')" id="btn-vidsrcxyz" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition shrink-0">Server 2 (XYZ)</button>
-                <button onclick="switchServer('autoembed')" id="btn-autoembed" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition shrink-0">Server 3 (AE)</button>
+                
+                <button onclick="switchServer('vidsrccc')" id="btn-vidsrccc" class="px-3 py-1.5 rounded-lg bg-rose-600 text-white font-semibold whitespace-nowrap transition shadow shrink-0">Server 1</button>
+                <button onclick="switchServer('autoembed')" id="btn-autoembed" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition shrink-0">Server 2</button>
+                
+                <!-- THE ESCAPE HATCH BUTTON -->
+                <a id="externalLinkBtn" href="#" target="_blank" class="ml-auto px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold whitespace-nowrap transition shadow animate-pulse shrink-0">
+                    ⧉ Watch in New Tab
+                </a>
             </div>
-
-            <div class="relative w-full aspect-video bg-black flex items-center justify-center">
-                <iframe id="videoFrame" src="" class="w-full h-full border-0" allowfullscreen></iframe>
-            </div>
-        </div>
-    </div>
-
-    <script src="app.js"></script>
-</body>
-</html>
+            
