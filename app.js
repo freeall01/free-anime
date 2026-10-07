@@ -2,11 +2,11 @@ const ANILIST_API = 'https://graphql.anilist.co';
 const animeGrid = document.getElementById('animeGrid');
 const searchInput = document.getElementById('searchInput');
 const videoModal = document.getElementById('videoModal');
+const videoFrame = document.getElementById('videoFrame');
 const modalTitle = document.getElementById('modalTitle');
-const nativeVideoPlayer = document.getElementById('nativeVideoPlayer');
-const playerMessage = document.getElementById('playerMessage');
 
-let hlsInstance = null;
+let currentAnimeId = null;
+let currentAnimeTitle = '';
 
 async function fetchAnime(searchQuery = '') {
     animeGrid.innerHTML = '<div class="col-span-full text-center py-20 text-slate-400">Loading anime catalog...</div>';
@@ -62,7 +62,7 @@ function displayAnime(animeList) {
         const episodes = anime.episodes ? `${anime.episodes} Eps` : 'Ongoing';
         
         animeGrid.innerHTML += `
-            <div class="bg-slate-900 rounded-xl overflow-hidden border border-slate-800 flex flex-col justify-between shadow-lg">
+            <div class="bg-slate-900 rounded-xl overflow-hidden border border-slate-800 flex flex-col justify-between shadow-lg hover:border-slate-700 transition">
                 <div>
                     <div class="relative h-48 sm:h-56">
                         <img src="${imageUrl}" alt="${title}" class="w-full h-full object-cover">
@@ -74,7 +74,7 @@ function displayAnime(animeList) {
                     </div>
                 </div>
                 <div class="p-3 pt-0">
-                    <button onclick="playNativeAnime(${anime.id}, '${title.replace(/'/g, "")}', '${imageUrl}')" class="block w-full text-center bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold py-2 rounded-lg transition">
+                    <button onclick="playAnime(${anime.id}, '${title.replace(/'/g, "")}')" class="block w-full text-center bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold py-2.5 rounded-lg transition shadow">
                         ▶ Watch Video
                     </button>
                 </div>
@@ -83,44 +83,38 @@ function displayAnime(animeList) {
     });
 }
 
-function playNativeAnime(id, title, posterUrl) {
-    modalTitle.innerText = `Now Playing: ${title}`;
+function playAnime(id, title) {
+    currentAnimeId = id;
+    currentAnimeTitle = title;
+    modalTitle.innerText = `Streaming: ${title}`;
+    
+    switchServer('vidlink');
     videoModal.classList.remove('hidden');
-    nativeVideoPlayer.poster = posterUrl;
-    playerMessage.innerText = "Connecting to stream server...";
+}
 
-    const streamUrl = `https://corsproxy.io/?https://anime-k-api.vercel.app/watch/${id}-episode-1`;
+function switchServer(serverName) {
+    const btn1 = document.getElementById('btn-vidlink');
+    const btn2 = document.getElementById('btn-vidsrc');
+    const btn3 = document.getElementById('btn-multiembed');
 
-    if (hlsInstance) {
-        hlsInstance.destroy();
-    }
+    [btn1, btn2, btn3].forEach(btn => {
+        if (btn) btn.className = 'px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition';
+    });
 
-    if (Hls.isSupported()) {
-        hlsInstance = new Hls();
-        hlsInstance.loadSource(streamUrl);
-        hlsInstance.attachMedia(nativeVideoPlayer);
-        hlsInstance.on(Hls.Events.MANIFEST_PARSED, function() {
-            playerMessage.innerText = "";
-            nativeVideoPlayer.play().catch(e => {
-                playerMessage.innerText = "Tap play button to start video.";
-            });
-        });
-        hlsInstance.on(Hls.Events.ERROR, function(event, data) {
-            playerMessage.innerText = "Stream playback error. Try another anime.";
-        });
-    } else if (nativeVideoPlayer.canPlayType('application/vnd.apple.mpegurl')) {
-        nativeVideoPlayer.src = streamUrl;
-        playerMessage.innerText = "";
-        nativeVideoPlayer.play();
+    if (serverName === 'vidlink') {
+        videoFrame.src = `https://vidlink.pro/anime/${currentAnimeId}/1/1`;
+        if (btn1) btn1.className = 'px-3 py-1.5 rounded-lg bg-rose-600 text-white font-semibold whitespace-nowrap transition shadow';
+    } else if (serverName === 'vidsrc') {
+        videoFrame.src = `https://vidsrc.cc/v2/embed/anime/${currentAnimeId}`;
+        if (btn2) btn2.className = 'px-3 py-1.5 rounded-lg bg-rose-600 text-white font-semibold whitespace-nowrap transition shadow';
+    } else if (serverName === 'multiembed') {
+        videoFrame.src = `https://iframe.anikasu.com/embed/${currentAnimeId}`;
+        if (btn3) btn3.className = 'px-3 py-1.5 rounded-lg bg-rose-600 text-white font-semibold transition shadow';
     }
 }
 
 function closePlayer() {
-    if (hlsInstance) {
-        hlsInstance.destroy();
-    }
-    nativeVideoPlayer.pause();
-    nativeVideoPlayer.src = '';
+    videoFrame.src = '';
     videoModal.classList.add('hidden');
 }
 
