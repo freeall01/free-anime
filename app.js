@@ -5,6 +5,8 @@ const videoModal = document.getElementById('videoModal');
 const videoFrame = document.getElementById('videoFrame');
 const modalTitle = document.getElementById('modalTitle');
 const epInput = document.getElementById('epInput');
+// Select the new external link button
+const externalLinkBtn = document.getElementById('externalLinkBtn');
 
 let currentAnilistId = null;
 let currentMalId = null;
@@ -68,7 +70,7 @@ function displayAnime(animeList) {
             <div class="bg-slate-900 rounded-xl overflow-hidden border border-slate-800 flex flex-col justify-between shadow-lg">
                 <div class="relative h-48 sm:h-56">
                     <img src="${imageUrl}" alt="${title}" class="w-full h-full object-cover">
-                    <span class="absolute top-2 right-2 bg-slate-900/90 backdrop-blur text-xs font-bold px-2 py-0.5 rounded text-amber-400">⭐ ${score}</span>
+                    <span class="absolute top-2 right-2 bg-slate-900/80 backdrop-blur text-xs font-bold px-2 py-0.5 rounded text-amber-400">⭐ ${score}</span>
                 </div>
                 <div class="p-3">
                     <h3 class="text-sm font-bold text-slate-100 line-clamp-1 mb-1">${title}</h3>
@@ -104,10 +106,9 @@ function switchServer(serverName) {
     
     const btn1 = document.getElementById('btn-vidsrccc');
     const btn2 = document.getElementById('btn-autoembed');
-    const externalLinkBtn = document.getElementById('externalLinkBtn'); // Get the new button
 
-    if(btn1) btn1.className = 'px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition shrink-0';
-    if(btn2) btn2.className = 'px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition shrink-0';
+    if (btn1) btn1.className = 'px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition shrink-0';
+    if (btn2) btn2.className = 'px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition shrink-0';
 
     let targetUrl = '';
 
@@ -115,15 +116,19 @@ function switchServer(serverName) {
         targetUrl = `https://vidsrc.cc/v2/embed/anime/${currentAnilistId}?ep=${ep}&sub=1`;
         if (btn1) btn1.className = 'px-3 py-1.5 rounded-lg bg-rose-600 text-white font-semibold whitespace-nowrap transition shadow shrink-0';
     } else if (serverName === 'autoembed') {
+        // AutoEmbed uses MyAnimeList (MAL) ID
         targetUrl = `https://player.autoembed.cc/embed/anime/mal/${currentMalId}/${ep}`;
         if (btn2) btn2.className = 'px-3 py-1.5 rounded-lg bg-rose-600 text-white font-semibold whitespace-nowrap transition shadow shrink-0';
     }
 
-    // Update both the iframe AND the external button link
+    // Load the video in the iframe
     videoFrame.src = targetUrl;
-    if(externalLinkBtn) externalLinkBtn.href = targetUrl;
+    
+    // Crucial: Send the exact same URL to the "Watch in New Tab" button
+    if (externalLinkBtn) {
+        externalLinkBtn.href = targetUrl;
+    }
 }
-
 
 function closePlayer() {
     videoFrame.src = '';
@@ -137,4 +142,5 @@ searchInput.addEventListener('input', (e) => {
     searchTimer = setTimeout(() => fetchAnime(query), 500);
 });
 
+// Initialize app
 fetchAnime();
