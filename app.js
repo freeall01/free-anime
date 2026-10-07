@@ -51,13 +51,14 @@ function displayAnime(animeList) {
 
     animeList.forEach(anime => {
         const title = anime.title.english || anime.title.romaji;
+        const cleanTitle = title.replace(/[^a-zA-Z0-9 ]/g, "").trim().toLowerCase().replace(/\s+/g, '-');
         const imageUrl = anime.coverImage.large;
         const score = anime.averageScore ? (anime.averageScore / 10).toFixed(1) : 'N/A';
         const episodes = anime.episodes ? `${anime.episodes} Eps` : 'Ongoing';
         
-        // Multi-option redirect links to ensure playback works instantly without loading loops
-        const serverOne = `https://vidlink.pro/anime/${anime.id}`;
-        const serverTwo = `https://vidsrc.xyz/embed/anime?anilist=${anime.id}`;
+        // Reliable direct search links to active streaming networks
+        const streamUrl = `https://hianime.to/search?keyword=${encodeURIComponent(title)}`;
+        const backupUrl = `https://gogoanimehd.io//search.html?keyword=${encodeURIComponent(title)}`;
         
         animeGrid.innerHTML += `
             <div class="bg-slate-900 rounded-xl overflow-hidden border border-slate-800 flex flex-col justify-between shadow-lg">
@@ -72,10 +73,10 @@ function displayAnime(animeList) {
                     </div>
                 </div>
                 <div class="p-3 pt-0 flex gap-2">
-                    <a href="${serverOne}" target="_blank" class="flex-1 text-center bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold py-2 rounded-lg transition">
+                    <a href="${streamUrl}" target="_blank" class="flex-1 text-center bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold py-2 rounded-lg transition">
                         ▶ Server 1
                     </a>
-                    <a href="${serverTwo}" target="_blank" class="flex-1 text-center bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold py-2 rounded-lg transition">
+                    <a href="${backupUrl}" target="_blank" class="flex-1 text-center bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold py-2 rounded-lg transition">
                         ▶ Server 2
                     </a>
                 </div>
