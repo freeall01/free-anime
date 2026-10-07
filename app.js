@@ -1,25 +1,34 @@
-const API_URL = 'https://api.jikan.moe/v4/top/anime?filter=airing';
+const API_URL = 'https://api.jikan.moe/v4/seasons/now';
 const SEARCH_URL = 'https://api.jikan.moe/v4/anime?q=';
+
 const animeGrid = document.getElementById('animeGrid');
 const searchInput = document.getElementById('searchInput');
 
 async function fetchAnime(url) {
     try {
-        animeGrid.innerHTML = '<div class="col-span-full text-center py-20 text-slate-500">Fetching shows...</div>';
+        animeGrid.innerHTML = '<div class="col-span-full text-center py-20 text-slate-400">Loading live anime feed...</div>';
+        
         const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        
         const data = await response.json();
         displayAnime(data.data);
     } catch (error) {
-        animeGrid.innerHTML = '<div class="col-span-full text-center text-rose-500 py-10">Failed to load content.</div>';
+        console.error('Error fetching data:', error);
+        animeGrid.innerHTML = '<div class="col-span-full text-center text-rose-500 py-10">API limit reached or offline. Please wait 10 seconds and refresh!</div>';
     }
 }
 
 function displayAnime(animeList) {
     animeGrid.innerHTML = '';
+    
     if (!animeList || animeList.length === 0) {
         animeGrid.innerHTML = '<div class="col-span-full text-center text-slate-400 py-10">No anime found.</div>';
         return;
     }
+
     animeList.forEach(anime => {
         const title = anime.title_english || anime.title;
         const score = anime.score ? anime.score : 'N/A';
@@ -34,7 +43,7 @@ function displayAnime(animeList) {
                     </div>
                     <div class="p-3">
                         <h3 class="text-sm font-bold text-slate-100 line-clamp-1">${title}</h3>
-                        <p class="text-xs text-gray-400 mt-1">Status: <span class="text-rose-400">${episodes}</span></p>
+                        <p class="text-xs text-slate-400 mt-1">Status: <span class="text-rose-400">${episodes}</span></p>
                     </div>
                 </div>
                 <div class="p-3 pt-0">
@@ -50,8 +59,11 @@ searchInput.addEventListener('input', (e) => {
     clearTimeout(searchTimer);
     const query = e.target.value.trim();
     searchTimer = setTimeout(() => {
-        if (query.length > 2) fetchAnime(`${SEARCH_URL}${encodeURIComponent(query)}&limit=16`);
-        else if (query.length === 0) fetchAnime(API_URL);
+        if (query.length > 2) {
+            fetchAnime(`${SEARCH_URL}${encodeURIComponent(query)}&limit=16`);
+        } else if (query.length === 0) {
+            fetchAnime(API_URL);
+        }
     }, 500);
 });
 
