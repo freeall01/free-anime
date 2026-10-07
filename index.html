@@ -19,7 +19,7 @@
             <span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></span>
             Trending & Ongoing Anime
         </h2>
-        <div id="animeGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+        <div id="animeGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
             <div class="col-span-full text-center py-20 text-slate-400">Loading anime database...</div>
         </div>
     </main>
@@ -33,11 +33,17 @@
                 <button onclick="closePlayer()" class="text-rose-400 hover:text-white font-bold px-3 py-1 bg-slate-800/80 hover:bg-rose-600 rounded-lg text-xs transition">✕ Close</button>
             </div>
 
-            <!-- Server Selection Bar -->
-            <div class="flex items-center gap-2 px-4 py-2.5 bg-slate-900/90 border-b border-slate-800 text-xs overflow-x-auto">
-                <span class="text-slate-400 font-medium whitespace-nowrap">Servers:</span>
-                <button onclick="switchServer('server1')" id="btn-server1" class="px-3 py-1.5 rounded-lg bg-rose-600 text-white font-semibold whitespace-nowrap transition shadow">Server 1 (VidSrc)</button>
-                <button onclick="switchServer('server2')" id="btn-server2" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition">Server 2 (EmbedSU)</button>
+            <!-- Server & Episode Selection Bar -->
+            <div class="flex items-center gap-3 px-4 py-2.5 bg-slate-900/90 border-b border-slate-800 text-xs overflow-x-auto">
+                <div class="flex items-center gap-1 shrink-0">
+                    <span class="text-slate-400 font-medium">Ep:</span>
+                    <input type="number" id="epInput" value="1" min="1" onchange="updateEpisode()" class="w-12 bg-slate-950 text-rose-400 font-bold rounded px-1 py-1.5 outline-none text-center border border-slate-700 focus:border-rose-500">
+                </div>
+                <div class="w-px h-6 bg-slate-700 shrink-0"></div>
+                <span class="text-slate-400 font-medium shrink-0">Servers:</span>
+                <button onclick="switchServer('vidsrccc')" id="btn-vidsrccc" class="px-3 py-1.5 rounded-lg bg-rose-600 text-white font-semibold whitespace-nowrap transition shadow shrink-0">VidSrc CC</button>
+                <button onclick="switchServer('vidsrcxyz')" id="btn-vidsrcxyz" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition shrink-0">VidSrc XYZ</button>
+                <button onclick="switchServer('smashy')" id="btn-smashy" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition shrink-0">SmashyStream</button>
             </div>
 
             <div class="relative w-full aspect-video bg-black flex items-center justify-center">
