@@ -5,6 +5,9 @@ const videoModal = document.getElementById('videoModal');
 const videoFrame = document.getElementById('videoFrame');
 const modalTitle = document.getElementById('modalTitle');
 
+let currentAnimeId = null;
+let currentAnimeTitle = '';
+
 async function fetchAnime(searchQuery = '') {
     animeGrid.innerHTML = '<div class="col-span-full text-center py-20 text-slate-400">Loading streaming list...</div>';
 
@@ -81,9 +84,36 @@ function displayAnime(animeList) {
 }
 
 function playAnime(id, title) {
+    currentAnimeId = id;
+    currentAnimeTitle = title;
     modalTitle.innerText = `Streaming: ${title}`;
-    videoFrame.src = `https://vidsrc.to/embed/anime/${id}`;
+    
+    // Default to Server 1
+    switchServer('vidlink');
     videoModal.classList.remove('hidden');
+}
+
+function switchServer(serverName) {
+    const btnVidlink = document.getElementById('btn-vidlink');
+    const btnVidsrc = document.getElementById('btn-vidsrc');
+    const btnMultiembed = document.getElementById('btn-multiembed');
+
+    // Reset all buttons to inactive style
+    [btnVidlink, btnVidsrc, btnMultiembed].forEach(btn => {
+        btn.className = 'px-3 py-1 rounded bg-slate-800 text-slate-300 hover:bg-slate-700 transition';
+    });
+
+    // Load appropriate server URL
+    if (serverName === 'vidlink') {
+        videoFrame.src = `https://vidlink.pro/anime/${currentAnimeId}`;
+        btnVidlink.className = 'px-3 py-1 rounded bg-rose-600 text-white font-semibold transition';
+    } else if (serverName === 'vidsrc') {
+        videoFrame.src = `https://vidsrc.cc/v2/embed/anime/${currentAnimeId}`;
+        btnVidsrc.className = 'px-3 py-1 rounded bg-rose-600 text-white font-semibold transition';
+    } else if (serverName === 'multiembed') {
+        videoFrame.src = `https://multiembed.mov/?video_id=${currentAnimeId}&tmdb=1`;
+        btnMultiembed.className = 'px-3 py-1 rounded bg-rose-600 text-white font-semibold transition';
+    }
 }
 
 function closePlayer() {
@@ -101,3 +131,4 @@ searchInput.addEventListener('input', (e) => {
 });
 
 fetchAnime();
+    
