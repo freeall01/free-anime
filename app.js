@@ -4,9 +4,10 @@ const searchInput = document.getElementById('searchInput');
 const videoModal = document.getElementById('videoModal');
 const videoFrame = document.getElementById('videoFrame');
 const modalTitle = document.getElementById('modalTitle');
+const epInput = document.getElementById('epInput');
 
 let currentAnilistId = null;
-let currentMalId = null;
+let currentServer = 'vidsrccc';
 
 async function fetchAnime(searchQuery = '') {
     animeGrid.innerHTML = '<div class="col-span-full text-center py-20 text-slate-400">Loading anime catalog...</div>';
@@ -14,10 +15,9 @@ async function fetchAnime(searchQuery = '') {
     try {
         const graphqlQuery = `
             query ($search: String) {
-                Page (page: 1, perPage: 20) {
+                Page (page: 1, perPage: 24) {
                     media (search: $search, status: RELEASING, type: ANIME, sort: POPULARITY_DESC) {
                         id
-                        idMal
                         title {
                             english
                             romaji
@@ -62,9 +62,6 @@ function displayAnime(animeList) {
         const score = anime.averageScore ? (anime.averageScore / 10).toFixed(1) : 'N/A';
         const episodes = anime.episodes ? `${anime.episodes} Eps` : 'Ongoing';
         
-        // Fetching both AniList ID and MyAnimeList (MAL) ID
-        const malId = anime.idMal || anime.id;
-        
         animeGrid.innerHTML += `
             <div class="bg-slate-900 rounded-xl overflow-hidden border border-slate-800 flex flex-col justify-between shadow-lg hover:border-slate-700 transition">
                 <div>
@@ -78,7 +75,7 @@ function displayAnime(animeList) {
                     </div>
                 </div>
                 <div class="p-3 pt-0">
-                    <button onclick="playAnime(${anime.id}, ${malId}, '${title.replace(/'/g, "")}')" class="block w-full text-center bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold py-2.5 rounded-lg transition shadow">
+                    <button onclick="playAnime(${anime.id}, '${title.replace(/'/g, "")}')" class="block w-full text-center bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold py-2.5 rounded-lg transition shadow">
                         ▶ Watch Video
                     </button>
                 </div>
@@ -87,30 +84,43 @@ function displayAnime(animeList) {
     });
 }
 
-function playAnime(anilistId, malId, title) {
+function playAnime(anilistId, title) {
     currentAnilistId = anilistId;
-    currentMalId = malId;
     modalTitle.innerText = `Streaming: ${title}`;
+    epInput.value = 1; // Reset to episode 1 for new videos
     
-    switchServer('server1');
+    switchServer('vidsrccc');
     videoModal.classList.remove('hidden');
 }
 
-function switchServer(serverName) {
-    const btn1 = document.getElementById('btn-server1');
-    const btn2 = document.getElementById('btn-server2');
-
-    if (btn1 && btn2) {
-        btn1.className = 'px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition';
-        btn2.className = 'px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition';
+function updateEpisode() {
+    if (currentAnilistId) {
+        switchServer(currentServer);
     }
+}
 
-    if (serverName === 'server1') {
-        videoFrame.src = `https://player.smashy.stream/anime?anilist=${currentAnilistId}`;
-        if (btn1) btn1.className = 'px-3 py-1.5 rounded-lg bg-rose-600 text-white font-semibold whitespace-nowrap transition shadow';
-    } else if (serverName === 'server2') {
-        videoFrame.src = `https://vidsrc.icu/embed/anime/${currentMalId}`;
-        if (btn2) btn2.className = 'px-3 py-1.5 rounded-lg bg-rose-600 text-white font-semibold whitespace-nowrap transition shadow';
+function switchServer(serverName) {
+    currentServer = serverName;
+    const ep = epInput.value || 1; // Fetch episode number from input box
+    
+    const btn1 = document.getElementById('btn-vidsrccc');
+    const btn2 = document.getElementById('btn-vidsrcxyz');
+    const btn3 = document.getElementById('btn-smashy');
+
+    [btn1, btn2, btn3].forEach(btn => {
+        if (btn) btn.className = 'px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition shrink-0';
+    });
+
+    // Valid dedicated anime endpoints that support AniList IDs perfectly
+    if (serverName === 'vidsrccc') {
+        videoFrame.src = `https://vidsrc.cc/v2/embed/anime/${currentAnilistId}?ep=${ep}&sub=1`;
+        if (btn1) btn1.className = 'px-3 py-1.5 rounded-lg bg-rose-600 text-white font-semibold whitespace-nowrap transition shadow shrink-0';
+    } else if (serverName === 'vidsrcxyz') {
+        videoFrame.src = `https://vidsrc.xyz/embed/anime?anilist=${currentAnilistId}&ep=${ep}`;
+        if (btn2) btn2.className = 'px-3 py-1.5 rounded-lg bg-rose-600 text-white font-semibold whitespace-nowrap transition shadow shrink-0';
+    } else if (serverName === 'smashy') {
+        videoFrame.src = `https://player.smashy.stream/anime?anilist=${currentAnilistId}&ep=${ep}`;
+        if (btn3) btn3.className = 'px-3 py-1.5 rounded-lg bg-rose-600 text-white font-semibold whitespace-nowrap transition shadow shrink-0';
     }
 }
 
