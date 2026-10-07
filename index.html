@@ -24,13 +24,25 @@
         </div>
     </main>
 
-    <!-- Video Player Modal -->
+    <!-- Video Player Modal with Multiple Servers -->
     <div id="videoModal" class="fixed inset-0 bg-black/90 z-50 hidden flex flex-col justify-center items-center p-4">
-        <div class="w-full max-w-4xl bg-slate-900 rounded-xl overflow-hidden border border-slate-800 relative">
+        <div class="w-full max-w-4xl bg-slate-900 rounded-xl overflow-hidden border border-slate-800 relative flex flex-col">
+            
+            <!-- Modal Header -->
             <div class="flex justify-between items-center p-3 bg-slate-950 border-b border-slate-800">
                 <h3 id="modalTitle" class="text-sm font-bold text-slate-200 truncate">Anime Player</h3>
-                <button onclick="closePlayer()" class="text-rose-500 font-bold px-3 py-1 bg-slate-800 rounded text-xs">✕ Close</button>
+                <button onclick="closePlayer()" class="text-rose-500 font-bold px-3 py-1 bg-slate-800 rounded text-xs hover:bg-slate-700">✕ Close</button>
             </div>
+
+            <!-- Server Switching Bar -->
+            <div class="flex items-center gap-2 px-3 py-2 bg-slate-900 border-b border-slate-800 text-xs">
+                <span class="text-slate-400 font-medium">Servers:</span>
+                <button onclick="switchServer('vidlink')" id="btn-vidlink" class="px-3 py-1 rounded bg-rose-600 text-white font-semibold transition">Server 1 (VidLink)</button>
+                <button onclick="switchServer('vidsrc')" id="btn-vidsrc" class="px-3 py-1 rounded bg-slate-800 text-slate-300 hover:bg-slate-700 transition">Server 2 (VidSrc)</button>
+                <button onclick="switchServer('multiembed')" id="btn-multiembed" class="px-3 py-1 rounded bg-slate-800 text-slate-300 hover:bg-slate-700 transition">Server 3 (MultiEmbed)</button>
+            </div>
+
+            <!-- Video Frame Container -->
             <div class="relative w-full aspect-video bg-black flex items-center justify-center">
                 <iframe id="videoFrame" src="" class="w-full h-full" frameborder="0" allowfullscreen></iframe>
             </div>
