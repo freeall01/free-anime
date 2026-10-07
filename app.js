@@ -1,19 +1,11 @@
 const ANILIST_API = 'https://graphql.anilist.co';
-// High-speed direct extraction API
-const EXTRACTION_API = 'https://api.amvstr.ml/api/v2/stream';
-
 const animeGrid = document.getElementById('animeGrid');
 const searchInput = document.getElementById('searchInput');
 const videoModal = document.getElementById('videoModal');
 const modalTitle = document.getElementById('modalTitle');
-const nativeVideo = document.getElementById('nativeVideo');
-const loadingStatus = document.getElementById('loadingStatus');
-const statusText = document.getElementById('statusText');
-const fallbackStatus = document.getElementById('fallbackStatus');
-const fallbackButtons = document.getElementById('fallbackButtons');
+const routingButtons = document.getElementById('routingButtons');
 
-let hlsInstance = null;
-
+// 1. Fetch Anime Metadata from AniList
 async function fetchAnime(searchQuery = '') {
     animeGrid.innerHTML = '<div class="col-span-full text-center py-20 text-slate-400">Loading catalog...</div>';
 
@@ -23,7 +15,6 @@ async function fetchAnime(searchQuery = '') {
                 Page (page: 1, perPage: 25) {
                     media (search: $search, status: RELEASING, type: ANIME, sort: POPULARITY_DESC) {
                         id
-                        idMal
                         title {
                             english
                             romaji
@@ -66,7 +57,6 @@ function displayAnime(animeList) {
         const imageUrl = anime.coverImage.large;
         const score = anime.averageScore ? (anime.averageScore / 10).toFixed(1) : 'N/A';
         const episodes = anime.episodes ? `${anime.episodes} Eps` : 'Ongoing';
-        const malId = anime.idMal || anime.id;
         
         animeGrid.innerHTML += `
             <div class="bg-slate-900 rounded-xl overflow-hidden border border-slate-800 flex flex-col justify-between shadow-lg">
@@ -76,9 +66,9 @@ function displayAnime(animeList) {
                 </div>
                 <div class="p-3">
                     <h3 class="text-sm font-bold text-slate-100 line-clamp-1 mb-1">${title}</h3>
-                    <p class="text-xs text-slate-400 mb-3">Status: <span class="text-emerald-400 font-medium">${episodes}</span></p>
-                    <button onclick="startStream(${anime.id}, ${malId}, '${title.replace(/'/g, "")}')" class="block w-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold py-2.5 rounded-lg transition shadow">
-                        ▶ Play Video
+                    <p class="text-xs text-slate-400 mb-3">Status: <span class="text-rose-400 font-medium">${episodes}</span></p>
+                    <button onclick="openRoutingModal('${title.replace(/'/g, "")}')" class="block w-full bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold py-2.5 rounded-lg transition shadow">
+                        ▶ Watch Options
                     </button>
                 </div>
             </div>
@@ -86,84 +76,35 @@ function displayAnime(animeList) {
     });
 }
 
-async function startStream(anilistId, malId, title) {
-    modalTitle.innerText = `Playing: ${title}`;
-    videoModal.classList.remove('hidden');
+// 2. Unblockable Routing System
+function openRoutingModal(title) {
+    modalTitle.innerText = title;
     
-    // Reset UI
-    if (hlsInstance) { hlsInstance.destroy(); }
-    nativeVideo.src = '';
-    nativeVideo.classList.add('hidden');
-    fallbackStatus.classList.add('hidden');
-    loadingStatus.classList.remove('hidden');
-    statusText.innerText = "Extracting raw stream...";
-
-    try {
-        // Step 1: Fetch raw .m3u8 URL from extraction API
-        const response = await fetch(`${EXTRACTION_API}/${anilistId}`);
-        if (!response.ok) throw new Error("API Blocked");
-        
-        const data = await response.json();
-        if (!data.stream || !data.stream.multi || !data.stream.multi.main) throw new Error("Stream missing");
-
-        const streamUrl = data.stream.multi.main.url;
-
-        // Step 2: Initialize Native Video Player
-        loadingStatus.classList.add('hidden');
-        nativeVideo.classList.remove('hidden');
-
-        if (Hls.isSupported()) {
-            hlsInstance = new Hls();
-            hlsInstance.loadSource(streamUrl);
-            hlsInstance.attachMedia(nativeVideo);
-            
-            // Listen for fatal network errors (ISP blocking the video chunks)
-            hlsInstance.on(Hls.Events.ERROR, function (event, data) {
-                if (data.fatal) {
-                    triggerFallback(title, malId);
-                }
-            });
-
-            hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => nativeVideo.play());
-        } else if (nativeVideo.canPlayType('application/vnd.apple.mpegurl')) {
-            nativeVideo.src = streamUrl;
-            nativeVideo.play();
-        }
-
-    } catch (error) {
-        triggerFallback(title, malId);
-    }
-}
-
-function triggerFallback(title, malId) {
-    // If the native stream fails due to ISP network blocking, show Unblocked External Links
-    if (hlsInstance) { hlsInstance.destroy(); }
-    nativeVideo.pause();
-    nativeVideo.classList.add('hidden');
-    loadingStatus.classList.add('hidden');
-    fallbackStatus.classList.remove('hidden');
-    fallbackStatus.classList.add('flex');
-
+    // Clean title for URL generation
     const cleanTitle = encodeURIComponent(title);
     
-    // These domains are specifically chosen because they currently evade Airtel/Jio blocking
-    fallbackButtons.innerHTML = `
-        <a href="https://anitaku.pe/search.html?keyword=${cleanTitle}" target="_blank" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-lg text-sm flex items-center justify-center gap-2">
-            <span>▶ Watch on Anitaku (Unblocked)</span> <span class="text-xs opacity-75">⧉</span>
+    // The 3 most resilient Anime sites that survived the 2026 purges
+    const yugenUrl = `https://yugenanime.tv/search/?q=${cleanTitle}`;
+    const paheUrl = `https://animepahe.ru/search?q=${cleanTitle}`;
+    const zoroxUrl = `https://zoroxtv.to/search?keyword=${cleanTitle}`;
+
+    routingButtons.innerHTML = `
+        <a href="${yugenUrl}" target="_blank" class="w-full bg-rose-600 hover:bg-rose-500 text-white font-bold py-3 rounded-lg text-sm flex items-center justify-center gap-2 transition">
+            <span>▶ Watch on YugenAnime</span> <span class="text-xs opacity-75">⧉</span>
         </a>
-        <a href="https://www.miruro.tv/watch?id=${malId}" target="_blank" class="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-lg text-sm flex items-center justify-center gap-2">
-            <span>▶ Watch on Miruro (Ad-Free)</span> <span class="text-xs opacity-75">⧉</span>
+        <a href="${paheUrl}" target="_blank" class="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-lg text-sm flex items-center justify-center gap-2 transition">
+            <span>▶ Watch on AnimePahe</span> <span class="text-xs opacity-75">⧉</span>
+        </a>
+        <a href="${zoroxUrl}" target="_blank" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-3 rounded-lg text-sm border border-slate-600 flex items-center justify-center gap-2 transition">
+            <span>▶ Watch on ZoroX</span> <span class="text-xs opacity-75">⧉</span>
         </a>
     `;
+    
+    videoModal.classList.remove('hidden');
 }
 
-function closePlayer() {
-    if (hlsInstance) { hlsInstance.destroy(); }
-    nativeVideo.pause();
-    nativeVideo.src = '';
+function closeModal() {
     videoModal.classList.add('hidden');
-    fallbackStatus.classList.add('hidden');
-    fallbackStatus.classList.remove('flex');
 }
 
 let searchTimer;
