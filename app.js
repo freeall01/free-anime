@@ -2,8 +2,10 @@ const ANILIST_API = 'https://graphql.anilist.co';
 const animeGrid = document.getElementById('animeGrid');
 const searchInput = document.getElementById('searchInput');
 const videoModal = document.getElementById('videoModal');
+const videoFrame = document.getElementById('videoFrame');
 const modalTitle = document.getElementById('modalTitle');
-const routingButtons = document.getElementById('routingButtons');
+
+let currentAnilistId = null;
 
 async function fetchAnime(searchQuery = '') {
     animeGrid.innerHTML = '<div class="col-span-full text-center py-20 text-slate-400">Loading catalog...</div>';
@@ -11,7 +13,7 @@ async function fetchAnime(searchQuery = '') {
     try {
         const graphqlQuery = `
             query ($search: String) {
-                Page (page: 1, perPage: 25) {
+                Page (page: 1, perPage: 24) {
                     media (search: $search, status: RELEASING, type: ANIME, sort: POPULARITY_DESC) {
                         id
                         title {
@@ -40,7 +42,7 @@ async function fetchAnime(searchQuery = '') {
         const result = await response.json();
         displayAnime(result.data.Page.media);
     } catch (error) {
-        animeGrid.innerHTML = '<div class="col-span-full text-center text-rose-500 py-10">Failed to connect to database. Check network.</div>';
+        animeGrid.innerHTML = '<div class="col-span-full text-center text-rose-500 py-10">Network Error.</div>';
     }
 }
 
@@ -61,13 +63,13 @@ function displayAnime(animeList) {
             <div class="bg-slate-900 rounded-xl overflow-hidden border border-slate-800 flex flex-col justify-between shadow-lg">
                 <div class="relative h-48 sm:h-56">
                     <img src="${imageUrl}" alt="${title}" class="w-full h-full object-cover">
-                    <span class="absolute top-2 right-2 bg-slate-900/90 backdrop-blur text-xs font-bold px-2 py-0.5 rounded text-amber-400">⭐ ${score}</span>
+                    <span class="absolute top-2 right-2 bg-slate-900/80 backdrop-blur text-xs font-bold px-2 py-0.5 rounded text-amber-400">⭐ ${score}</span>
                 </div>
                 <div class="p-3">
                     <h3 class="text-sm font-bold text-slate-100 line-clamp-1 mb-1">${title}</h3>
-                    <p class="text-xs text-slate-400 mb-3">Status: <span class="text-rose-400 font-medium">${episodes}</span></p>
-                    <button onclick="openRoutingModal('${title.replace(/'/g, "")}')" class="block w-full bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold py-2.5 rounded-lg transition shadow">
-                        ▶ Find Streams
+                    <p class="text-xs text-slate-400 mb-2">Status: <span class="text-rose-400">${episodes}</span></p>
+                    <button onclick="playAnime(${anime.id}, '${title.replace(/'/g, "")}')" class="block w-full text-center bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold py-2.5 rounded-lg transition shadow">
+                        ▶ Watch Video
                     </button>
                 </div>
             </div>
@@ -75,45 +77,37 @@ function displayAnime(animeList) {
     });
 }
 
-function openRoutingModal(title) {
-    modalTitle.innerText = title;
+function playAnime(id, title) {
+    currentAnilistId = id;
+    modalTitle.innerText = `Streaming: ${title}`;
     
-    // Clean title for URL generation
-    const cleanTitle = encodeURIComponent(title);
-    
-    // 1. DuckDuckGo (Does not filter out piracy sites like Google does)
-    const ddgUrl = `https://duckduckgo.com/?q=watch+${cleanTitle}+anime+free+online`;
-    
-    // 2. Yandex Search (Completely ignores DMCA takedowns)
-    const yandexUrl = `https://yandex.com/search/?text=watch+${cleanTitle}+anime+free`;
-    
-    // 3. Crunchyroll (Legal fallback)
-    const crunchyUrl = `https://www.crunchyroll.com/search?q=${cleanTitle}`;
-
-    routingButtons.innerHTML = `
-        <a href="${ddgUrl}" target="_blank" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-lg text-sm flex items-center justify-center gap-2 transition">
-            <span>▶ Web Search (Uncensored)</span> <span class="text-xs opacity-75">⧉</span>
-        </a>
-        <a href="${yandexUrl}" target="_blank" class="w-full bg-rose-600 hover:bg-rose-500 text-white font-bold py-3 rounded-lg text-sm flex items-center justify-center gap-2 transition">
-            <span>▶ Deep Search (Bypass Blocks)</span> <span class="text-xs opacity-75">⧉</span>
-        </a>
-        <a href="${crunchyUrl}" target="_blank" class="w-full bg-orange-500 hover:bg-orange-400 text-white font-bold py-3 rounded-lg text-sm border border-orange-400 flex items-center justify-center gap-2 transition">
-            <span>▶ Check Crunchyroll</span> <span class="text-xs opacity-75">⧉</span>
-        </a>
-    `;
-    
+    // Default to first server
+    switchServer('vidsrccc');
     videoModal.classList.remove('hidden');
 }
 
-function closeModal() {
-    videoModal.classList.add('hidden');
+function switchServer(serverName) {
+    const btn1 = document.getElementById('btn-vidsrccc');
+    const btn2 = document.getElementById('btn-smashy');
+    const btn3 = document.getElementById('btn-autoembed');
+
+    [btn1, btn2, btn3].forEach(btn => {
+        if (btn) btn.className = 'px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition';
+    });
+
+    if (serverName === 'vidsrccc') {
+        videoFrame.src = `https://vidsrc.cc/v2/embed/anime/${currentAnilistId}?sub=1`;
+        if (btn1) btn1.className = 'px-3 py-1.5 rounded-lg bg-rose-600 text-white font-semibold whitespace-nowrap transition shadow';
+    } else if (serverName === 'smashy') {
+        videoFrame.src = `https://player.smashy.stream/anime?anilist=${currentAnilistId}`;
+        if (btn2) btn2.className = 'px-3 py-1.5 rounded-lg bg-rose-600 text-white font-semibold whitespace-nowrap transition shadow';
+    } else if (serverName === 'autoembed') {
+        videoFrame.src = `https://autoembed.co/anime/anilist/${currentAnilistId}`;
+        if (btn3) btn3.className = 'px-3 py-1.5 rounded-lg bg-rose-600 text-white font-semibold whitespace-nowrap transition shadow';
+    }
 }
 
-let searchTimer;
-searchInput.addEventListener('input', (e) => {
-    clearTimeout(searchTimer);
-    const query = e.target.value.trim();
-    searchTimer = setTimeout(() => fetchAnime(query), 500);
-});
-
-fetchAnime();
+function closePlayer() {
+    videoFrame.src = '';
+    videoModal.classList.add('hidden
+                             
