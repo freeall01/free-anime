@@ -5,7 +5,8 @@ const videoModal = document.getElementById('videoModal');
 const videoFrame = document.getElementById('videoFrame');
 const modalTitle = document.getElementById('modalTitle');
 
-let currentAnimeId = null;
+let currentAnilistId = null;
+let currentMalId = null;
 
 async function fetchAnime(searchQuery = '') {
     animeGrid.innerHTML = '<div class="col-span-full text-center py-20 text-slate-400">Loading anime catalog...</div>';
@@ -16,6 +17,7 @@ async function fetchAnime(searchQuery = '') {
                 Page (page: 1, perPage: 20) {
                     media (search: $search, status: RELEASING, type: ANIME, sort: POPULARITY_DESC) {
                         id
+                        idMal
                         title {
                             english
                             romaji
@@ -60,6 +62,9 @@ function displayAnime(animeList) {
         const score = anime.averageScore ? (anime.averageScore / 10).toFixed(1) : 'N/A';
         const episodes = anime.episodes ? `${anime.episodes} Eps` : 'Ongoing';
         
+        // Fetching both AniList ID and MyAnimeList (MAL) ID
+        const malId = anime.idMal || anime.id;
+        
         animeGrid.innerHTML += `
             <div class="bg-slate-900 rounded-xl overflow-hidden border border-slate-800 flex flex-col justify-between shadow-lg hover:border-slate-700 transition">
                 <div>
@@ -73,7 +78,7 @@ function displayAnime(animeList) {
                     </div>
                 </div>
                 <div class="p-3 pt-0">
-                    <button onclick="playAnime(${anime.id}, '${title.replace(/'/g, "")}')" class="block w-full text-center bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold py-2.5 rounded-lg transition shadow">
+                    <button onclick="playAnime(${anime.id}, ${malId}, '${title.replace(/'/g, "")}')" class="block w-full text-center bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold py-2.5 rounded-lg transition shadow">
                         ▶ Watch Video
                     </button>
                 </div>
@@ -82,11 +87,11 @@ function displayAnime(animeList) {
     });
 }
 
-function playAnime(id, title) {
-    currentAnimeId = id;
+function playAnime(anilistId, malId, title) {
+    currentAnilistId = anilistId;
+    currentMalId = malId;
     modalTitle.innerText = `Streaming: ${title}`;
     
-    // Default to Server 1
     switchServer('server1');
     videoModal.classList.remove('hidden');
 }
@@ -100,12 +105,12 @@ function switchServer(serverName) {
         btn2.className = 'px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition';
     }
 
-    // Using servers that are generally unblocked
+    // Using correct ID formats for each specific server to prevent 404 errors
     if (serverName === 'server1') {
-        videoFrame.src = `https://autoembed.co/anime/anilist/${currentAnimeId}`;
+        videoFrame.src = `https://vidsrc.me/embed/anime?anilist=${currentAnilistId}`;
         if (btn1) btn1.className = 'px-3 py-1.5 rounded-lg bg-rose-600 text-white font-semibold whitespace-nowrap transition shadow';
     } else if (serverName === 'server2') {
-        videoFrame.src = `https://vidsrc.cc/v2/embed/anime/${currentAnimeId}`;
+        videoFrame.src = `https://embed.su/embed/anime/${currentMalId}`;
         if (btn2) btn2.className = 'px-3 py-1.5 rounded-lg bg-rose-600 text-white font-semibold whitespace-nowrap transition shadow';
     }
 }
