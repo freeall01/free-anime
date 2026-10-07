@@ -89,30 +89,32 @@ function playAnime(id, title) {
     modalTitle.innerText = `Streaming: ${title}`;
     
     // Default to Server 1
-    switchServer('vidlink');
+    switchServer('server1');
     videoModal.classList.remove('hidden');
 }
 
 function switchServer(serverName) {
-    const btnVidlink = document.getElementById('btn-vidlink');
-    const btnVidsrc = document.getElementById('btn-vidsrc');
-    const btnMultiembed = document.getElementById('btn-multiembed');
+    const btn1 = document.getElementById('btn-vidlink');
+    const btn2 = document.getElementById('btn-vidsrc');
+    const btn3 = document.getElementById('btn-multiembed');
 
-    // Reset all buttons to inactive style
-    [btnVidlink, btnVidsrc, btnMultiembed].forEach(btn => {
-        btn.className = 'px-3 py-1 rounded bg-slate-800 text-slate-300 hover:bg-slate-700 transition';
-    });
+    // Reset button highlights
+    if (btn1 && btn2 && btn3) {
+        [btn1, btn2, btn3].forEach(btn => {
+            btn.className = 'px-3 py-1 rounded bg-slate-800 text-slate-300 hover:bg-slate-700 transition';
+        });
+    }
 
-    // Load appropriate server URL
-    if (serverName === 'vidlink') {
-        videoFrame.src = `https://vidlink.pro/anime/${currentAnimeId}`;
-        btnVidlink.className = 'px-3 py-1 rounded bg-rose-600 text-white font-semibold transition';
-    } else if (serverName === 'vidsrc') {
-        videoFrame.src = `https://vidsrc.cc/v2/embed/anime/${currentAnimeId}`;
-        btnVidsrc.className = 'px-3 py-1 rounded bg-rose-600 text-white font-semibold transition';
-    } else if (serverName === 'multiembed') {
-        videoFrame.src = `https://multiembed.mov/?video_id=${currentAnimeId}&tmdb=1`;
-        btnMultiembed.className = 'px-3 py-1 rounded bg-rose-600 text-white font-semibold transition';
+    // Assign reliable alternative fallback URLs
+    if (serverName === 'server1') {
+        videoFrame.src = `https://iframe.anikasu.com/anime/${currentAnimeId}`;
+        if (btn1) btn1.className = 'px-3 py-1 rounded bg-rose-600 text-white font-semibold transition';
+    } else if (serverName === 'server2') {
+        videoFrame.src = `https://vidsrc.xyz/embed/anime?anilist=${currentAnimeId}`;
+        if (btn2) btn2.className = 'px-3 py-1 rounded bg-rose-600 text-white font-semibold transition';
+    } else if (serverName === 'server3') {
+        videoFrame.src = `https://player.autoembed.cc/embed/anime/anilist/${currentAnimeId}`;
+        if (btn3) btn3.className = 'px-3 py-1 rounded bg-rose-600 text-white font-semibold transition';
     }
 }
 
@@ -131,4 +133,3 @@ searchInput.addEventListener('input', (e) => {
 });
 
 fetchAnime();
-    
