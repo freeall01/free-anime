@@ -3,7 +3,7 @@ const animeGrid = document.getElementById('animeGrid');
 const searchInput = document.getElementById('searchInput');
 
 async function fetchAnime(searchQuery = '') {
-    animeGrid.innerHTML = '<div class="col-span-full text-center py-20 text-slate-400">Loading streaming list...</div>';
+    animeGrid.innerHTML = '<div class="col-span-full text-center py-20 text-slate-400">Loading anime catalog...</div>';
 
     try {
         const graphqlQuery = `
@@ -37,7 +37,7 @@ async function fetchAnime(searchQuery = '') {
         const result = await response.json();
         displayAnime(result.data.Page.media);
     } catch (error) {
-        animeGrid.innerHTML = '<div class="col-span-full text-center text-rose-500 py-10">Failed to load anime stream sources.</div>';
+        animeGrid.innerHTML = '<div class="col-span-full text-center text-rose-500 py-10">Failed to connect to anime database.</div>';
     }
 }
 
@@ -55,8 +55,9 @@ function displayAnime(animeList) {
         const score = anime.averageScore ? (anime.averageScore / 10).toFixed(1) : 'N/A';
         const episodes = anime.episodes ? `${anime.episodes} Eps` : 'Ongoing';
         
-        // Direct stream link using AniList ID
-        const watchUrl = `https://vidlink.pro/anime/${anime.id}`;
+        // Multi-option redirect links to ensure playback works instantly without loading loops
+        const serverOne = `https://vidlink.pro/anime/${anime.id}`;
+        const serverTwo = `https://vidsrc.xyz/embed/anime?anilist=${anime.id}`;
         
         animeGrid.innerHTML += `
             <div class="bg-slate-900 rounded-xl overflow-hidden border border-slate-800 flex flex-col justify-between shadow-lg">
@@ -70,9 +71,12 @@ function displayAnime(animeList) {
                         <p class="text-xs text-slate-400 mt-1">Status: <span class="text-rose-400">${episodes}</span></p>
                     </div>
                 </div>
-                <div class="p-3 pt-0">
-                    <a href="${watchUrl}" target="_blank" class="block w-full text-center bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold py-2 rounded-lg transition">
-                        ▶ Watch Video
+                <div class="p-3 pt-0 flex gap-2">
+                    <a href="${serverOne}" target="_blank" class="flex-1 text-center bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold py-2 rounded-lg transition">
+                        ▶ Server 1
+                    </a>
+                    <a href="${serverTwo}" target="_blank" class="flex-1 text-center bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold py-2 rounded-lg transition">
+                        ▶ Server 2
                     </a>
                 </div>
             </div>
