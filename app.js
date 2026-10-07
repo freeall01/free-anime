@@ -103,25 +103,27 @@ function switchServer(serverName) {
     const ep = epInput.value || 1;
     
     const btn1 = document.getElementById('btn-vidsrccc');
-    const btn2 = document.getElementById('btn-vidsrcxyz');
-    const btn3 = document.getElementById('btn-autoembed');
+    const btn2 = document.getElementById('btn-autoembed');
+    const externalLinkBtn = document.getElementById('externalLinkBtn'); // Get the new button
 
-    [btn1, btn2, btn3].forEach(btn => {
-        if (btn) btn.className = 'px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition shrink-0';
-    });
+    if(btn1) btn1.className = 'px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition shrink-0';
+    if(btn2) btn2.className = 'px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition shrink-0';
+
+    let targetUrl = '';
 
     if (serverName === 'vidsrccc') {
-        videoFrame.src = `https://vidsrc.cc/v2/embed/anime/${currentAnilistId}?ep=${ep}&sub=1`;
+        targetUrl = `https://vidsrc.cc/v2/embed/anime/${currentAnilistId}?ep=${ep}&sub=1`;
         if (btn1) btn1.className = 'px-3 py-1.5 rounded-lg bg-rose-600 text-white font-semibold whitespace-nowrap transition shadow shrink-0';
-    } else if (serverName === 'vidsrcxyz') {
-        videoFrame.src = `https://vidsrc.xyz/embed/anime?anilist=${currentAnilistId}&ep=${ep}`;
-        if (btn2) btn2.className = 'px-3 py-1.5 rounded-lg bg-rose-600 text-white font-semibold whitespace-nowrap transition shadow shrink-0';
     } else if (serverName === 'autoembed') {
-        // AutoEmbed specifically prefers MAL IDs for accuracy
-        videoFrame.src = `https://player.autoembed.cc/embed/anime/mal/${currentMalId}/${ep}`;
-        if (btn3) btn3.className = 'px-3 py-1.5 rounded-lg bg-rose-600 text-white font-semibold whitespace-nowrap transition shadow shrink-0';
+        targetUrl = `https://player.autoembed.cc/embed/anime/mal/${currentMalId}/${ep}`;
+        if (btn2) btn2.className = 'px-3 py-1.5 rounded-lg bg-rose-600 text-white font-semibold whitespace-nowrap transition shadow shrink-0';
     }
+
+    // Update both the iframe AND the external button link
+    videoFrame.src = targetUrl;
+    if(externalLinkBtn) externalLinkBtn.href = targetUrl;
 }
+
 
 function closePlayer() {
     videoFrame.src = '';
