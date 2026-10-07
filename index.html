@@ -4,15 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FREE-ANIME - Streaming App</title>
-    <!-- HLS Video Player Support Library -->
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen font-sans">
-    <header class="sticky top-0 z-50 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-3 flex items-center justify-between">
+    <header class="sticky top-0 z-50 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-3 flex items-center justify-between shadow-md">
         <span class="text-xl font-black text-rose-500 tracking-wider">FREE-<span class="text-white">ANIME</span></span>
         <div class="w-1/2 max-w-xs">
-            <input type="text" id="searchInput" placeholder="Search anime..." class="w-full bg-slate-800 text-sm text-slate-200 px-3 py-1.5 rounded-full border border-slate-700 focus:outline-none focus:border-rose-500">
+            <input type="text" id="searchInput" placeholder="Search anime..." class="w-full bg-slate-800 text-sm text-slate-200 px-4 py-2 rounded-full border border-slate-700 focus:outline-none focus:border-rose-500 transition">
         </div>
     </header>
 
@@ -26,18 +24,27 @@
         </div>
     </main>
 
-    <!-- Native Video Player Modal -->
-    <div id="videoModal" class="fixed inset-0 bg-black/90 z-50 hidden flex flex-col justify-center items-center p-4">
-        <div class="w-full max-w-4xl bg-slate-900 rounded-xl overflow-hidden border border-slate-800 relative flex flex-col">
-            <div class="flex justify-between items-center p-3 bg-slate-950 border-b border-slate-800">
-                <h3 id="modalTitle" class="text-sm font-bold text-slate-200 truncate">Anime Player</h3>
-                <button onclick="closePlayer()" class="text-rose-500 font-bold px-3 py-1 bg-slate-800 rounded text-xs hover:bg-slate-700">✕ Close</button>
+    <!-- Professional Video Player Modal -->
+    <div id="videoModal" class="fixed inset-0 bg-black/95 z-50 hidden flex flex-col justify-center items-center p-2 sm:p-4 backdrop-blur-sm">
+        <div class="w-full max-w-4xl bg-slate-900 rounded-2xl overflow-hidden border border-slate-800 shadow-2xl flex flex-col">
+            
+            <!-- Modal Header -->
+            <div class="flex justify-between items-center px-4 py-3 bg-slate-950 border-b border-slate-800">
+                <h3 id="modalTitle" class="text-sm sm:text-base font-bold text-slate-100 truncate pr-2">Anime Player</h3>
+                <button onclick="closePlayer()" class="text-rose-400 hover:text-white font-bold px-3 py-1 bg-slate-800/80 hover:bg-rose-600 rounded-lg text-xs transition">✕ Close</button>
             </div>
+
+            <!-- Server Selection Bar -->
+            <div class="flex items-center gap-2 px-4 py-2.5 bg-slate-900/90 border-b border-slate-800 text-xs overflow-x-auto">
+                <span class="text-slate-400 font-medium whitespace-nowrap">Servers:</span>
+                <button onclick="switchServer('vidlink')" id="btn-vidlink" class="px-3 py-1.5 rounded-lg bg-rose-600 text-white font-semibold whitespace-nowrap transition shadow">Server 1 (VidLink)</button>
+                <button onclick="switchServer('vidsrc')" id="btn-vidsrc" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition">Server 2 (VidSrc)</button>
+                <button onclick="switchServer('multiembed')" id="btn-multiembed" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition">Server 3 (Direct)</button>
+            </div>
+
+            <!-- Video Frame Container -->
             <div class="relative w-full aspect-video bg-black flex items-center justify-center">
-                <div id="playerContainer" class="w-full h-full flex flex-col items-center justify-center bg-black relative">
-                    <video id="nativeVideoPlayer" controls class="w-full h-full max-h-[70vh] object-contain"></video>
-                    <div id="playerMessage" class="absolute text-sm text-slate-300 bg-slate-900/80 px-4 py-2 rounded-lg pointer-events-none">Loading stream...</div>
-                </div>
+                <iframe id="videoFrame" src="" class="w-full h-full border-0" allowfullscreen></iframe>
             </div>
         </div>
     </div>
