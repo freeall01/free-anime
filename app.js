@@ -1,15 +1,6 @@
 const ANILIST_API = 'https://graphql.anilist.co';
 const animeGrid = document.getElementById('animeGrid');
 const searchInput = document.getElementById('searchInput');
-const videoModal = document.getElementById('videoModal');
-const videoFrame = document.getElementById('videoFrame');
-const modalTitle = document.getElementById('modalTitle');
-const epInput = document.getElementById('epInput');
-const openNewTabBtn = document.getElementById('openNewTabBtn');
-
-let currentAnilistId = null;
-let currentMalId = null;
-let currentServer = 'autoembed';
 
 async function fetchAnime(searchQuery = '') {
     animeGrid.innerHTML = '<div class="col-span-full text-center py-20 text-slate-400">Loading anime catalog...</div>';
@@ -20,7 +11,6 @@ async function fetchAnime(searchQuery = '') {
                 Page (page: 1, perPage: 24) {
                     media (search: $search, status: RELEASING, type: ANIME, sort: POPULARITY_DESC) {
                         id
-                        idMal
                         title {
                             english
                             romaji
@@ -65,8 +55,8 @@ function displayAnime(animeList) {
         const score = anime.averageScore ? (anime.averageScore / 10).toFixed(1) : 'N/A';
         const episodes = anime.episodes ? `${anime.episodes} Eps` : 'Ongoing';
         
-        // Ensure MAL ID is prioritized for accurate embedding
-        const malId = anime.idMal || anime.id;
+        // Clean title for perfect URL routing
+        const cleanTitle = encodeURIComponent(title);
         
         animeGrid.innerHTML += `
             <div class="bg-slate-900 rounded-xl overflow-hidden border border-slate-800 flex flex-col justify-between shadow-lg hover:border-slate-700 transition">
@@ -80,68 +70,17 @@ function displayAnime(animeList) {
                         <p class="text-xs text-slate-400 mt-1">Status: <span class="text-rose-400">${episodes}</span></p>
                     </div>
                 </div>
-                <div class="p-3 pt-0">
-                    <button onclick="playAnime(${anime.id}, ${malId}, '${title.replace(/'/g, "")}')" class="block w-full text-center bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold py-2.5 rounded-lg transition shadow">
-                        ▶ Watch Video
-                    </button>
+                <div class="p-3 pt-0 flex flex-col gap-2">
+                    <a href="https://hianime.to/search?keyword=${cleanTitle}" target="_blank" class="block w-full text-center bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold py-2.5 rounded-lg transition shadow">
+                        ▶ Watch on HiAnime
+                    </a>
+                    <a href="https://anitaku.pe/search.html?keyword=${cleanTitle}" target="_blank" class="block w-full text-center bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold py-2.5 rounded-lg transition">
+                        ▶ Watch on Anitaku
+                    </a>
                 </div>
             </div>
         `;
     });
-}
-
-function playAnime(anilistId, malId, title) {
-    currentAnilistId = anilistId;
-    currentMalId = malId;
-    modalTitle.innerText = `Streaming: ${title}`;
-    epInput.value = 1; // Reset to Ep 1
-    
-    switchServer('autoembed');
-    videoModal.classList.remove('hidden');
-}
-
-function updateEpisode() {
-    if (currentMalId) {
-        switchServer(currentServer);
-    }
-}
-
-function switchServer(serverName) {
-    currentServer = serverName;
-    const ep = epInput.value || 1; 
-    
-    const btn1 = document.getElementById('btn-autoembed');
-    const btn2 = document.getElementById('btn-vidsrcto');
-    const btn3 = document.getElementById('btn-embedsu');
-
-    [btn1, btn2, btn3].forEach(btn => {
-        if (btn) btn.className = 'px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition shrink-0';
-    });
-
-    let targetUrl = '';
-
-    // Direct Anime URLs using the universal MAL (MyAnimeList) ID Format
-    if (serverName === 'autoembed') {
-        targetUrl = `https://player.autoembed.cc/embed/anime/mal/${currentMalId}/${ep}`;
-        if (btn1) btn1.className = 'px-3 py-1.5 rounded-lg bg-rose-600 text-white font-semibold whitespace-nowrap transition shadow shrink-0';
-    } else if (serverName === 'vidsrcto') {
-        targetUrl = `https://vidsrc.to/embed/anime/${currentMalId}/${ep}`;
-        if (btn2) btn2.className = 'px-3 py-1.5 rounded-lg bg-rose-600 text-white font-semibold whitespace-nowrap transition shadow shrink-0';
-    } else if (serverName === 'embedsu') {
-        targetUrl = `https://embed.su/embed/anime/${currentMalId}?episode=${ep}`;
-        if (btn3) btn3.className = 'px-3 py-1.5 rounded-lg bg-rose-600 text-white font-semibold whitespace-nowrap transition shadow shrink-0';
-    }
-
-    // Set iframe source
-    videoFrame.src = targetUrl;
-    
-    // Fallback Magic Button: Sets the "Open" button href so users can bypass black screens
-    openNewTabBtn.href = targetUrl;
-}
-
-function closePlayer() {
-    videoFrame.src = '';
-    videoModal.classList.add('hidden');
 }
 
 let searchTimer;
