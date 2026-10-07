@@ -71,7 +71,7 @@ function displayAnime(animeList) {
                     </div>
                 </div>
                 <div class="p-3 pt-0">
-                    <button onclick="playAnime('${title.replace(/'/g, "")}')" class="block w-full text-center bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold py-2 rounded-lg transition">
+                    <button onclick="playAnime(${anime.id}, '${title.replace(/'/g, "")}')" class="block w-full text-center bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold py-2 rounded-lg transition">
                         ▶ Watch Video
                     </button>
                 </div>
@@ -80,9 +80,9 @@ function displayAnime(animeList) {
     });
 }
 
-function playAnime(title) {
+function playAnime(id, title) {
     modalTitle.innerText = `Streaming: ${title}`;
-    videoFrame.src = `https://vidsrc.xyz/embed/anime?title=${encodeURIComponent(title)}`;
+    videoFrame.src = `https://vidsrc.to/embed/anime/${id}`;
     videoModal.classList.remove('hidden');
 }
 
