@@ -98,15 +98,16 @@ function changeEpisode() {
 }
 
 async function fetchAndPlayStream(anilistId, episodeNumber) {
+async function fetchAndPlayStream(anilistId, episodeNumber) {
     try {
         if (modalTitle) modalTitle.innerText = `Loading Episode ${episodeNumber}...`;
 
-        // 1. Fetch directly from the API (Bypassing the Vercel proxy requirement)
-        const infoRes = await fetch(`https://api.amvstr.me/api/v2/info/${anilistId}`);
-        if (!infoRes.ok) throw new Error("API Info fetch failed");
+        // 1. Fetch info securely via Vercel Backend
+        const infoUrl = encodeURIComponent(`https://api.amvstr.me/api/v2/info/${anilistId}`);
+        const infoRes = await fetch(`/api/proxy?target=${infoUrl}`);
+        if (!infoRes.ok) throw new Error("Proxy Connection Failed");
         const infoData = await infoRes.json();
         
-        // 2. Find the correct episode ID
         const epData = infoData.episodes?.find(e => Number(e.number) === Number(episodeNumber));
         if (!epData) {
             if (modalTitle) modalTitle.innerText = `Episode ${episodeNumber} not found!`;
@@ -115,27 +116,28 @@ async function fetchAndPlayStream(anilistId, episodeNumber) {
 
         if (modalTitle) modalTitle.innerText = `Extracting Video File...`;
 
-        // 3. Fetch the raw M3U8 stream directly
-        const streamRes = await fetch(`https://api.amvstr.me/api/v2/stream/${epData.id}`);
-        if (!streamRes.ok) throw new Error("API Stream fetch failed");
+        // 2. Fetch video stream securely via Vercel Backend
+        const streamUrl = encodeURIComponent(`https://api.amvstr.me/api/v2/stream/${epData.id}`);
+        const streamRes = await fetch(`/api/proxy?target=${streamUrl}`);
+        if (!streamRes.ok) throw new Error("Proxy Stream Failed");
         const streamData = await streamRes.json();
         
-        // 4. Extract the primary M3U8 URL
-        let m3u8Url = '';
-        if (streamData?.stream?.multi?.main?.url) {
-            m3u8Url = streamData.stream.multi.main.url;
-        } else if (streamData?.stream?.multi?.backup?.url) {
-            m3u8Url = streamData.stream.multi.backup.url;
-        }
-
+        let m3u8Url = streamData?.stream?.multi?.main?.url || streamData?.stream?.multi?.backup?.url;
         if (!m3u8Url) {
             if (modalTitle) modalTitle.innerText = `Failed to load video stream.`;
             return;
         }
 
-        // 5. Success! Feed it to the custom player
+        // 3. Success! Feed it to your custom player
         if (modalTitle) modalTitle.innerText = `Streaming Episode ${episodeNumber}`;
         initCustomPlayer(m3u8Url);
+        
+    } catch (error) {
+        if (modalTitle) modalTitle.innerText = "Error connecting to Vercel Backend.";
+        console.error("Fetch Error:", error);
+    }
+}
+
         
     } catch (error) {
         if (modalTitle) modalTitle.innerText = "Network Error or API Blocked.";
