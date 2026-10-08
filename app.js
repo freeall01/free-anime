@@ -109,9 +109,9 @@ function switchServer(serverName) {
     currentServer = serverName;
     const ep = epInput ? (epInput.value || 1) : 1;
     
-    const btn1 = document.getElementById('btn-ng_ani');
-    const btn2 = document.getElementById('btn-ng_mal');
-    const btn3 = document.getElementById('btn-embedsu');
+    const btn1 = document.getElementById('btn-nontongo');
+    const btn2 = document.getElementById('btn-smashy');
+    const btn3 = document.getElementById('btn-vidlink');
 
     // Reset styles
     [btn1, btn2, btn3].forEach(btn => {
@@ -120,15 +120,15 @@ function switchServer(serverName) {
 
     let targetUrl = '';
 
-    // Unblocked APIs for Indian ISPs (No VPN Required)
-    if (serverName === 'ng_ani') {
+    // Multi-Network Fallbacks
+    if (serverName === 'nontongo') {
         targetUrl = `https://nontongo.win/anime/${currentAnilistId}/${ep}/play`;
         if (btn1) btn1.className = 'px-3 py-1.5 rounded-lg bg-rose-600 text-white font-semibold whitespace-nowrap transition shadow shrink-0';
-    } else if (serverName === 'ng_mal') {
-        targetUrl = `https://nontongo.win/anime/stream?id=${currentMalId}&e=${ep}&type=MAL_ID`;
+    } else if (serverName === 'smashy') {
+        targetUrl = `https://player.smashy.stream/anime?anilist=${currentAnilistId}&ep=${ep}`;
         if (btn2) btn2.className = 'px-3 py-1.5 rounded-lg bg-rose-600 text-white font-semibold whitespace-nowrap transition shadow shrink-0';
-    } else if (serverName === 'embedsu') {
-        targetUrl = `https://embed.su/embed/anime/${currentMalId}?episode=${ep}`;
+    } else if (serverName === 'vidlink') {
+        targetUrl = `https://vidlink.pro/anime/${currentAnilistId}/${ep}`;
         if (btn3) btn3.className = 'px-3 py-1.5 rounded-lg bg-rose-600 text-white font-semibold whitespace-nowrap transition shadow shrink-0';
     }
 
@@ -140,6 +140,7 @@ function switchServer(serverName) {
         externalLinkBtn.href = targetUrl;
     }
 }
+
 
 function closePlayer() {
     if (videoFrame) videoFrame.src = '';
