@@ -97,13 +97,50 @@ function changeEpisode() {
     }
 }
 
-async function fetchAndPlayStream(anilistId, episode) {
-    // Phase 2 Goal: We will build a Vercel backend to fetch real Anime M3U8 links here.
-    // For now, this loads a stunning 1080p open-source test stream so you can test your new player UI.
-    const testStreamUrl = 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8';
-    
-    initCustomPlayer(testStreamUrl);
+async function fetchAndPlayStream(anilistId, episodeNumber) {
+    try {
+        if (modalTitle) modalTitle.innerText = `Loading Episode ${episodeNumber}...`;
+
+        // 1. Fetch Anime Info from the AMVSTRM API using the AniList ID
+        const infoRes = await fetch(`https://api.amvstr.me/api/v2/info/${anilistId}`);
+        const infoData = await infoRes.json();
+        
+        // 2. Find the correct episode ID from the database
+        const epData = infoData.episodes.find(e => Number(e.number) === Number(episodeNumber));
+        if (!epData) {
+            if (modalTitle) modalTitle.innerText = `Episode ${episodeNumber} not found!`;
+            return;
+        }
+
+        if (modalTitle) modalTitle.innerText = `Extracting Video File...`;
+
+        // 3. Fetch the raw M3U8 video stream using the Episode ID
+        const streamRes = await fetch(`https://api.amvstr.me/api/v2/stream/${epData.id}`);
+        const streamData = await streamRes.json();
+        
+        // 4. Extract the primary high-quality M3U8 URL
+        let m3u8Url = '';
+        if (streamData?.stream?.multi?.main?.url) {
+            m3u8Url = streamData.stream.multi.main.url;
+        } else if (streamData?.stream?.multi?.backup?.url) {
+            m3u8Url = streamData.stream.multi.backup.url;
+        }
+
+        if (!m3u8Url) {
+            if (modalTitle) modalTitle.innerText = `Failed to load video stream.`;
+            return;
+        }
+
+        // 5. Success! Feed the real anime video into your custom player
+        if (modalTitle) modalTitle.innerText = `Streaming Episode ${episodeNumber}`;
+        initCustomPlayer(m3u8Url);
+        
+    } catch (error) {
+        if (modalTitle) modalTitle.innerText = "Error connecting to streaming API.";
+        console.error(error);
+    }
 }
+
 
 // --- 3. CORE HLS AND PLYR ENGINE ---
 function initCustomPlayer(m3u8Url) {
