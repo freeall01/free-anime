@@ -1,9 +1,6 @@
 export default async function handler(req, res) {
     const { target } = req.query;
-
-    if (!target) {
-        return res.status(400).json({ error: "No target URL provided." });
-    }
+    if (!target) return res.status(400).json({ error: "No target" });
 
     try {
         const response = await fetch(target, {
@@ -12,17 +9,15 @@ export default async function handler(req, res) {
                 'Accept': 'application/json'
             }
         });
-
         const data = await response.json();
-
-        // CORS বাইপাস করার জন্য হেডার
+        
+        // Headers to bypass CORS on your frontend
         res.setHeader('Access-Control-Allow-Origin', '*');
         res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
         res.setHeader('Content-Type', 'application/json');
-
+        
         res.status(200).json(data);
     } catch (error) {
-        console.error("Proxy Error:", error);
-        res.status(500).json({ error: "Backend failed to fetch data." });
+        res.status(500).json({ error: "Backend failed" });
     }
 }
