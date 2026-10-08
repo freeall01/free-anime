@@ -36,6 +36,9 @@
             <div class="bg-rose-950/50 border-b border-rose-900/50 px-4 py-2 text-[11px] sm:text-xs text-rose-200 text-center flex items-center justify-center gap-2">
                 <span class="font-bold text-rose-400">⚠️ ISP BLOCK WARNING:</span> If the video is black, click the green "Watch in New Tab" button below.
             </div>
+            <button onclick="switchServer('nontongo')" id="btn-nontongo" class="px-3 py-1.5 rounded-lg bg-rose-600 text-white font-semibold whitespace-nowrap transition shadow shrink-0">Server 1 (NG)</button>
+<button onclick="switchServer('smashy')" id="btn-smashy" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition shrink-0">Server 2 (Smashy)</button>
+<button onclick="switchServer('vidlink')" id="btn-vidlink" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition shrink-0">Server 3 (VL)</button>
 
             <!-- Server & Episode Controls -->
             <div class="flex items-center gap-3 px-4 py-2.5 bg-slate-900/90 border-b border-slate-800 text-xs overflow-x-auto">
@@ -45,10 +48,6 @@
                 </div>
                 
                 <div class="w-px h-6 bg-slate-700 shrink-0"></div>
-                
-                <button onclick="switchServer('ng_ani')" id="btn-ng_ani" class="px-3 py-1.5 rounded-lg bg-rose-600 text-white font-semibold whitespace-nowrap transition shadow shrink-0">Server 1 (NG)</button>
-                <button onclick="switchServer('ng_mal')" id="btn-ng_mal" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition shrink-0">Server 2 (NG-Alt)</button>
-                <button onclick="switchServer('embedsu')" id="btn-embedsu" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition shrink-0">Server 3 (SU)</button>
                 
                 <!-- Escape Hatch -->
                 <a id="externalLinkBtn" href="#" target="_blank" class="ml-auto px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold whitespace-nowrap transition shadow animate-pulse shrink-0 flex items-center gap-1">
