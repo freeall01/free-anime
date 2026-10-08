@@ -9,7 +9,7 @@ const externalLinkBtn = document.getElementById('externalLinkBtn');
 
 let currentAnilistId = null;
 let currentMalId = null;
-let currentServer = 'vidlink';
+let currentServer = 'vidsrccc';
 
 async function fetchAnime(searchQuery = '') {
     if (!animeGrid) return;
@@ -95,7 +95,7 @@ function playAnime(anilistId, malId, title) {
     if (modalTitle) modalTitle.innerText = `Streaming: ${title}`;
     if (epInput) epInput.value = 1; 
     
-    switchServer('vidlink');
+    switchServer('vidsrccc');
     if (videoModal) videoModal.classList.remove('hidden');
 }
 
@@ -109,9 +109,9 @@ function switchServer(serverName) {
     currentServer = serverName;
     const ep = epInput ? (epInput.value || 1) : 1;
     
-    const btn1 = document.getElementById('btn-vidlink');
-    const btn2 = document.getElementById('btn-vidsrcin');
-    const btn3 = document.getElementById('btn-embedsu');
+    const btn1 = document.getElementById('btn-vidsrccc');
+    const btn2 = document.getElementById('btn-vidsrcnet');
+    const btn3 = document.getElementById('btn-vidsrcpm');
 
     // Reset styles
     [btn1, btn2, btn3].forEach(btn => {
@@ -120,15 +120,15 @@ function switchServer(serverName) {
 
     let targetUrl = '';
 
-    // Route to the newest, most resilient proxy servers available
-    if (serverName === 'vidlink') {
-        targetUrl = `https://vidlink.pro/anime/${currentAnilistId}/${ep}`;
+    // Unblocked Mirrors for Indian ISPs (No VPN/DNS Required)
+    if (serverName === 'vidsrccc') {
+        targetUrl = `https://vidsrc.cc/v2/embed/anime/${currentAnilistId}/${ep}`;
         if (btn1) btn1.className = 'px-3 py-1.5 rounded-lg bg-rose-600 text-white font-semibold whitespace-nowrap transition shadow shrink-0';
-    } else if (serverName === 'vidsrcin') {
-        targetUrl = `https://vidsrc.in/embed/anime?anilist=${currentAnilistId}&ep=${ep}`;
+    } else if (serverName === 'vidsrcnet') {
+        targetUrl = `https://vidsrc.net/embed/anime?anilist=${currentAnilistId}&ep=${ep}`;
         if (btn2) btn2.className = 'px-3 py-1.5 rounded-lg bg-rose-600 text-white font-semibold whitespace-nowrap transition shadow shrink-0';
-    } else if (serverName === 'embedsu') {
-        targetUrl = `https://embed.su/embed/anime/${currentMalId}?episode=${ep}`;
+    } else if (serverName === 'vidsrcpm') {
+        targetUrl = `https://vidsrc.pm/embed/anime?anilist=${currentAnilistId}&ep=${ep}`;
         if (btn3) btn3.className = 'px-3 py-1.5 rounded-lg bg-rose-600 text-white font-semibold whitespace-nowrap transition shadow shrink-0';
     }
 
