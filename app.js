@@ -145,21 +145,8 @@ async function fetchAndPlayStream(anilistId, episodeNumber) {
     }
 }
 
-
-        // 5. Success! Feed the real anime video into your custom player
-        if (modalTitle) modalTitle.innerText = `Streaming Episode ${episodeNumber}`;
-        initCustomPlayer(m3u8Url);
-        
-    } catch (error) {
-        if (modalTitle) modalTitle.innerText = "Error connecting to streaming API.";
-        console.error(error);
-    }
-}
-
-
 // --- 3. CORE HLS AND PLYR ENGINE ---
 function initCustomPlayer(m3u8Url) {
-    // Destroy previous instances to prevent audio overlap
     if (hlsInstance) { hlsInstance.destroy(); }
     if (playerInstance) { playerInstance.destroy(); }
 
@@ -174,7 +161,6 @@ function initCustomPlayer(m3u8Url) {
         hlsInstance.attachMedia(nativePlayer);
         
         hlsInstance.on(Hls.Events.MANIFEST_PARSED, function (event, data) {
-            // Map the available HLS qualities into the Plyr settings gear
             const availableQualities = hlsInstance.levels.map((l) => l.height);
             defaultOptions.quality = {
                 default: availableQualities[0],
@@ -184,10 +170,9 @@ function initCustomPlayer(m3u8Url) {
             };
 
             playerInstance = new Plyr(nativePlayer, defaultOptions);
-            playerInstance.play(); // Auto-play
+            playerInstance.play(); 
         });
     } else if (nativePlayer.canPlayType('application/vnd.apple.mpegurl')) {
-        // Native support for Safari/iOS
         nativePlayer.src = m3u8Url;
         playerInstance = new Plyr(nativePlayer, defaultOptions);
         playerInstance.play();
