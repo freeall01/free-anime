@@ -80,7 +80,7 @@ function displayAnime(animeList) {
     });
 }
 
-// --- 2. PLAYER LOGIC AND ROUTING ---
+// --- 2. MULTI-SERVER FAILOVER LOGIC ---
 function playAnime(anilistId, title) {
     currentAnilistId = anilistId;
     if (modalTitle) modalTitle.innerText = `Streaming: ${title}`;
@@ -92,24 +92,40 @@ function playAnime(anilistId, title) {
 
 function changeEpisode() {
     const ep = epInput ? (epInput.value || 1) : 1;
-    if (currentAnilistId) {
-        fetchAndPlayStream(currentAnilistId, ep);
-    }
+    if (currentAnilistId) fetchAndPlayStream(currentAnilistId, ep);
 }
 
 async function fetchAndPlayStream(anilistId, episodeNumber) {
     try {
-        if (modalTitle) modalTitle.innerText = `Loading Episode ${episodeNumber}...`;
+        if (modalTitle) modalTitle.innerText = `Connecting to Servers...`;
 
-        // 1. Route the request through a distributed rotating proxy
-        const proxyBase = 'https://corsproxy.io/?';
-        const infoUrl = encodeURIComponent(`https://api.amvstr.me/api/v2/info/${anilistId}`);
+        // Failover System: পরপর ৩টি সার্ভারে চেষ্টা করবে যেন একটি ডাউন থাকলেও ভিডিও চলে
+        async function fetchWithFailover(endpoint) {
+            const servers = [
+                'https://consumet-api-clone.vercel.app/meta/anilist',
+                'https://api-consumet-org-omega.vercel.app/meta/anilist',
+                'https://c.delusionz.xyz/meta/anilist'
+            ];
+            
+            for (let base of servers) {
+                try {
+                    const targetUrl = encodeURIComponent(`${base}${endpoint}`);
+                    const res = await fetch(`/api/proxy?target=${targetUrl}`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (!data.error) return data;
+                    }
+                } catch (e) {
+                    console.log(`Server bypassed: ${base}`);
+                }
+            }
+            throw new Error("All backup servers failed.");
+        }
+
+        // 1. Fetch Anime Info (Bypassing Jio & Cloudflare)
+        const infoData = await fetchWithFailover(`/info/${anilistId}`);
         
-        const infoRes = await fetch(proxyBase + infoUrl);
-        if (!infoRes.ok) throw new Error("Proxy Connection Failed");
-        const infoData = await infoRes.json();
-        
-        // 2. Find the episode
+        // 2. Find Episode ID
         const epData = infoData.episodes?.find(e => Number(e.number) === Number(episodeNumber));
         if (!epData) {
             if (modalTitle) modalTitle.innerText = `Episode ${episodeNumber} not found!`;
@@ -118,28 +134,36 @@ async function fetchAndPlayStream(anilistId, episodeNumber) {
 
         if (modalTitle) modalTitle.innerText = `Extracting Video File...`;
 
-        // 3. Fetch the video stream through the rotating proxy
-        const streamUrl = encodeURIComponent(`https://api.amvstr.me/api/v2/stream/${epData.id}`);
-        const streamRes = await fetch(proxyBase + streamUrl);
-        if (!streamRes.ok) throw new Error("Proxy Stream Failed");
-        const streamData = await streamRes.json();
+        // 3. Fetch Raw Video Stream
+        const watchData = await fetchWithFailover(`/watch/${epData.id}`);
         
-        let m3u8Url = streamData?.stream?.multi?.main?.url || streamData?.stream?.multi?.backup?.url;
+        // 4. Extract highest quality M3U8 Link
+        let m3u8Url = '';
+        const defaultSource = watchData.sources?.find(s => s.quality === 'default' || s.quality === 'auto');
+        const hdSource = watchData.sources?.find(s => s.quality === '1080p' || s.quality === '720p');
+
+        if (defaultSource) {
+            m3u8Url = defaultSource.url;
+        } else if (hdSource) {
+            m3u8Url = hdSource.url;
+        } else if (watchData.sources && watchData.sources.length > 0) {
+            m3u8Url = watchData.sources[0].url;
+        }
+
         if (!m3u8Url) {
             if (modalTitle) modalTitle.innerText = `Failed to load video stream.`;
             return;
         }
 
-        // 4. Success! Load the custom UI
+        // 5. Success! Play in Custom Native Player
         if (modalTitle) modalTitle.innerText = `Streaming Episode ${episodeNumber}`;
         initCustomPlayer(m3u8Url);
         
     } catch (error) {
-        if (modalTitle) modalTitle.innerText = "Error fetching from database.";
+        if (modalTitle) modalTitle.innerText = "Error: All servers are currently busy.";
         console.error("Fetch Error:", error);
     }
 }
-
 
 // --- 3. CORE HLS AND PLYR ENGINE ---
 function initCustomPlayer(m3u8Url) {
