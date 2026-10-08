@@ -5,15 +5,16 @@ const videoModal = document.getElementById('videoModal');
 const videoFrame = document.getElementById('videoFrame');
 const modalTitle = document.getElementById('modalTitle');
 const epInput = document.getElementById('epInput');
-// Select the new external link button
 const externalLinkBtn = document.getElementById('externalLinkBtn');
 
 let currentAnilistId = null;
 let currentMalId = null;
 let currentServer = 'vidsrccc';
 
+// Fetch Anime from AniList API
 async function fetchAnime(searchQuery = '') {
-    animeGrid.innerHTML = '<div class="col-span-full text-center py-20 text-slate-400">Loading catalog...</div>';
+    if (!animeGrid) return;
+    animeGrid.innerHTML = '<div class="col-span-full text-center py-20 text-slate-400 font-medium animate-pulse">Loading catalog...</div>';
 
     try {
         const graphqlQuery = `
@@ -46,12 +47,19 @@ async function fetchAnime(searchQuery = '') {
         });
 
         const result = await response.json();
-        displayAnime(result.data.Page.media);
+        
+        if (result.data && result.data.Page && result.data.Page.media) {
+            displayAnime(result.data.Page.media);
+        } else {
+            throw new Error("No data found");
+        }
     } catch (error) {
-        animeGrid.innerHTML = '<div class="col-span-full text-center text-rose-500 py-10">Failed to connect to database.</div>';
+        console.error("API Error:", error);
+        animeGrid.innerHTML = '<div class="col-span-full text-center text-rose-500 py-10">Failed to connect to database. Please check your internet connection.</div>';
     }
 }
 
+// Display Anime Cards
 function displayAnime(animeList) {
     animeGrid.innerHTML = '';
     if (!animeList || animeList.length === 0) {
@@ -60,22 +68,27 @@ function displayAnime(animeList) {
     }
 
     animeList.forEach(anime => {
-        const title = anime.title.english || anime.title.romaji;
-        const imageUrl = anime.coverImage.large;
+        const title = anime.title.english || anime.title.romaji || "Unknown Title";
+        const imageUrl = anime.coverImage ? anime.coverImage.large : '';
         const score = anime.averageScore ? (anime.averageScore / 10).toFixed(1) : 'N/A';
         const episodes = anime.episodes ? `${anime.episodes} Eps` : 'Ongoing';
+        
+        // Ensure we handle missing MAL IDs gracefully
         const malId = anime.idMal || anime.id;
+        
+        // Escape quotes in the title to prevent HTML breaking
+        const safeTitle = title.replace(/'/g, "\\'").replace(/"/g, '&quot;');
         
         animeGrid.innerHTML += `
             <div class="bg-slate-900 rounded-xl overflow-hidden border border-slate-800 flex flex-col justify-between shadow-lg">
                 <div class="relative h-48 sm:h-56">
                     <img src="${imageUrl}" alt="${title}" class="w-full h-full object-cover">
-                    <span class="absolute top-2 right-2 bg-slate-900/80 backdrop-blur text-xs font-bold px-2 py-0.5 rounded text-amber-400">⭐ ${score}</span>
+                    <span class="absolute top-2 right-2 bg-slate-900/90 backdrop-blur text-xs font-bold px-2 py-0.5 rounded text-amber-400">⭐ ${score}</span>
                 </div>
                 <div class="p-3">
                     <h3 class="text-sm font-bold text-slate-100 line-clamp-1 mb-1">${title}</h3>
                     <p class="text-xs text-slate-400 mb-3">Status: <span class="text-rose-400 font-medium">${episodes}</span></p>
-                    <button onclick="playAnime(${anime.id}, ${malId}, '${title.replace(/'/g, "")}')" class="block w-full bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold py-2.5 rounded-lg transition shadow">
+                    <button onclick="playAnime(${anime.id}, ${malId}, '${safeTitle}')" class="block w-full bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold py-2.5 rounded-lg transition shadow">
                         ▶ Watch Video
                     </button>
                 </div>
@@ -84,63 +97,74 @@ function displayAnime(animeList) {
     });
 }
 
+// Open the Modal Player
 function playAnime(anilistId, malId, title) {
     currentAnilistId = anilistId;
     currentMalId = malId;
-    modalTitle.innerText = `Streaming: ${title}`;
-    epInput.value = 1; 
+    
+    if (modalTitle) modalTitle.innerText = `Streaming: ${title}`;
+    if (epInput) epInput.value = 1; 
     
     switchServer('vidsrccc');
-    videoModal.classList.remove('hidden');
+    if (videoModal) videoModal.classList.remove('hidden');
 }
 
+// Update Stream when Episode changes
 function updateStream() {
     if (currentAnilistId) {
         switchServer(currentServer);
     }
 }
 
+// Switch Servers and Update the Escape Hatch Button
 function switchServer(serverName) {
     currentServer = serverName;
-    const ep = epInput.value || 1;
+    const ep = epInput ? (epInput.value || 1) : 1;
     
     const btn1 = document.getElementById('btn-vidsrccc');
     const btn2 = document.getElementById('btn-autoembed');
 
+    // Reset button styles
     if (btn1) btn1.className = 'px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition shrink-0';
     if (btn2) btn2.className = 'px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition shrink-0';
 
     let targetUrl = '';
 
+    // Assign URLs and highlight active button
     if (serverName === 'vidsrccc') {
         targetUrl = `https://vidsrc.cc/v2/embed/anime/${currentAnilistId}?ep=${ep}&sub=1`;
         if (btn1) btn1.className = 'px-3 py-1.5 rounded-lg bg-rose-600 text-white font-semibold whitespace-nowrap transition shadow shrink-0';
     } else if (serverName === 'autoembed') {
-        // AutoEmbed uses MyAnimeList (MAL) ID
         targetUrl = `https://player.autoembed.cc/embed/anime/mal/${currentMalId}/${ep}`;
         if (btn2) btn2.className = 'px-3 py-1.5 rounded-lg bg-rose-600 text-white font-semibold whitespace-nowrap transition shadow shrink-0';
     }
 
-    // Load the video in the iframe
-    videoFrame.src = targetUrl;
+    // Update the Iframe Source
+    if (videoFrame) {
+        videoFrame.src = targetUrl;
+    }
     
-    // Crucial: Send the exact same URL to the "Watch in New Tab" button
+    // Update the External "Watch in New Tab" Button Source
     if (externalLinkBtn) {
         externalLinkBtn.href = targetUrl;
     }
 }
 
+// Close the Modal
 function closePlayer() {
-    videoFrame.src = '';
-    videoModal.classList.add('hidden');
+    if (videoFrame) videoFrame.src = '';
+    if (videoModal) videoModal.classList.add('hidden');
 }
 
+// Search functionality with debounce
 let searchTimer;
-searchInput.addEventListener('input', (e) => {
-    clearTimeout(searchTimer);
-    const query = e.target.value.trim();
-    searchTimer = setTimeout(() => fetchAnime(query), 500);
-});
+if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+        clearTimeout(searchTimer);
+        const query = e.target.value.trim();
+        searchTimer = setTimeout(() => fetchAnime(query), 500);
+    });
+}
 
-// Initialize app
+// Start App
 fetchAnime();
