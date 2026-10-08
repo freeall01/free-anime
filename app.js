@@ -101,11 +101,9 @@ async function fetchAndPlayStream(anilistId, episodeNumber) {
     try {
         if (modalTitle) modalTitle.innerText = `Loading Episode ${episodeNumber}...`;
 
-        // 1. Fetch Anime Info securely through your Vercel Backend Proxy
-        const infoUrl = encodeURIComponent(`https://api.amvstr.me/api/v2/info/${anilistId}`);
-        const infoRes = await fetch(`/api/proxy?target=${infoUrl}`);
-        
-        if (!infoRes.ok) throw new Error("Backend Proxy failed to connect.");
+        // 1. Fetch directly from the API (Bypassing the Vercel proxy requirement)
+        const infoRes = await fetch(`https://api.amvstr.me/api/v2/info/${anilistId}`);
+        if (!infoRes.ok) throw new Error("API Info fetch failed");
         const infoData = await infoRes.json();
         
         // 2. Find the correct episode ID
@@ -117,9 +115,9 @@ async function fetchAndPlayStream(anilistId, episodeNumber) {
 
         if (modalTitle) modalTitle.innerText = `Extracting Video File...`;
 
-        // 3. Fetch the M3U8 stream securely through your Vercel Backend Proxy
-        const streamUrl = encodeURIComponent(`https://api.amvstr.me/api/v2/stream/${epData.id}`);
-        const streamRes = await fetch(`/api/proxy?target=${streamUrl}`);
+        // 3. Fetch the raw M3U8 stream directly
+        const streamRes = await fetch(`https://api.amvstr.me/api/v2/stream/${epData.id}`);
+        if (!streamRes.ok) throw new Error("API Stream fetch failed");
         const streamData = await streamRes.json();
         
         // 4. Extract the primary M3U8 URL
@@ -140,10 +138,11 @@ async function fetchAndPlayStream(anilistId, episodeNumber) {
         initCustomPlayer(m3u8Url);
         
     } catch (error) {
-        if (modalTitle) modalTitle.innerText = "Error connecting to streaming API.";
+        if (modalTitle) modalTitle.innerText = "Network Error or API Blocked.";
         console.error("Fetch Error:", error);
     }
 }
+
 
 // --- 3. CORE HLS AND PLYR ENGINE ---
 function initCustomPlayer(m3u8Url) {
