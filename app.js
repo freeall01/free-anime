@@ -98,11 +98,10 @@ function changeEpisode() {
 }
 
 async function fetchAndPlayStream(anilistId, episodeNumber) {
-async function fetchAndPlayStream(anilistId, episodeNumber) {
     try {
         if (modalTitle) modalTitle.innerText = `Loading Episode ${episodeNumber}...`;
 
-        // 1. Fetch info securely via Vercel Backend
+        // 1. Fetch info securely via Vercel Backend Proxy
         const infoUrl = encodeURIComponent(`https://api.amvstr.me/api/v2/info/${anilistId}`);
         const infoRes = await fetch(`/api/proxy?target=${infoUrl}`);
         if (!infoRes.ok) throw new Error("Proxy Connection Failed");
@@ -116,7 +115,7 @@ async function fetchAndPlayStream(anilistId, episodeNumber) {
 
         if (modalTitle) modalTitle.innerText = `Extracting Video File...`;
 
-        // 2. Fetch video stream securely via Vercel Backend
+        // 2. Fetch video stream securely via Vercel Backend Proxy
         const streamUrl = encodeURIComponent(`https://api.amvstr.me/api/v2/stream/${epData.id}`);
         const streamRes = await fetch(`/api/proxy?target=${streamUrl}`);
         if (!streamRes.ok) throw new Error("Proxy Stream Failed");
@@ -137,14 +136,6 @@ async function fetchAndPlayStream(anilistId, episodeNumber) {
         console.error("Fetch Error:", error);
     }
 }
-
-        
-    } catch (error) {
-        if (modalTitle) modalTitle.innerText = "Network Error or API Blocked.";
-        console.error("Fetch Error:", error);
-    }
-}
-
 
 // --- 3. CORE HLS AND PLYR ENGINE ---
 function initCustomPlayer(m3u8Url) {
