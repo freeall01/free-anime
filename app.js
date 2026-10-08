@@ -101,12 +101,15 @@ async function fetchAndPlayStream(anilistId, episodeNumber) {
     try {
         if (modalTitle) modalTitle.innerText = `Loading Episode ${episodeNumber}...`;
 
-        // 1. Fetch Anime Info from the AMVSTRM API using the AniList ID
-        const infoRes = await fetch(`https://api.amvstr.me/api/v2/info/${anilistId}`);
+        // 1. Fetch Anime Info securely through your Vercel Backend Proxy
+        const infoUrl = encodeURIComponent(`https://api.amvstr.me/api/v2/info/${anilistId}`);
+        const infoRes = await fetch(`/api/proxy?target=${infoUrl}`);
+        
+        if (!infoRes.ok) throw new Error("Backend Proxy failed to connect.");
         const infoData = await infoRes.json();
         
-        // 2. Find the correct episode ID from the database
-        const epData = infoData.episodes.find(e => Number(e.number) === Number(episodeNumber));
+        // 2. Find the correct episode ID
+        const epData = infoData.episodes?.find(e => Number(e.number) === Number(episodeNumber));
         if (!epData) {
             if (modalTitle) modalTitle.innerText = `Episode ${episodeNumber} not found!`;
             return;
@@ -114,11 +117,12 @@ async function fetchAndPlayStream(anilistId, episodeNumber) {
 
         if (modalTitle) modalTitle.innerText = `Extracting Video File...`;
 
-        // 3. Fetch the raw M3U8 video stream using the Episode ID
-        const streamRes = await fetch(`https://api.amvstr.me/api/v2/stream/${epData.id}`);
+        // 3. Fetch the M3U8 stream securely through your Vercel Backend Proxy
+        const streamUrl = encodeURIComponent(`https://api.amvstr.me/api/v2/stream/${epData.id}`);
+        const streamRes = await fetch(`/api/proxy?target=${streamUrl}`);
         const streamData = await streamRes.json();
         
-        // 4. Extract the primary high-quality M3U8 URL
+        // 4. Extract the primary M3U8 URL
         let m3u8Url = '';
         if (streamData?.stream?.multi?.main?.url) {
             m3u8Url = streamData.stream.multi.main.url;
@@ -130,6 +134,17 @@ async function fetchAndPlayStream(anilistId, episodeNumber) {
             if (modalTitle) modalTitle.innerText = `Failed to load video stream.`;
             return;
         }
+
+        // 5. Success! Feed it to the custom player
+        if (modalTitle) modalTitle.innerText = `Streaming Episode ${episodeNumber}`;
+        initCustomPlayer(m3u8Url);
+        
+    } catch (error) {
+        if (modalTitle) modalTitle.innerText = "Error connecting to streaming API.";
+        console.error("Fetch Error:", error);
+    }
+}
+
 
         // 5. Success! Feed the real anime video into your custom player
         if (modalTitle) modalTitle.innerText = `Streaming Episode ${episodeNumber}`;
