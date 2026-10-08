@@ -1,23 +1,19 @@
 const ANILIST_API = 'https://graphql.anilist.co';
-const BASE_CONSUMET_API = 'https://api-consumet-org-six-sandy.vercel.app/meta/anilist';
-
 const animeGrid = document.getElementById('animeGrid');
 const searchInput = document.getElementById('searchInput');
 const videoModal = document.getElementById('videoModal');
+const videoFrame = document.getElementById('videoFrame');
 const modalTitle = document.getElementById('modalTitle');
 const epInput = document.getElementById('epInput');
-const nativePlayer = document.getElementById('nativePlayer');
-const loadingStatus = document.getElementById('loadingStatus');
-const statusText = document.getElementById('statusText');
+const externalLinkBtn = document.getElementById('externalLinkBtn');
 
 let currentAnilistId = null;
-let currentTitle = '';
-let hlsInstance = null;
+let currentMalId = null;
+let currentServer = 'vidlink';
 
-// 1. Fetch Anime Catalog
 async function fetchAnime(searchQuery = '') {
     if (!animeGrid) return;
-    animeGrid.innerHTML = '<div class="col-span-full text-center py-20 text-slate-400 animate-pulse">Loading catalog...</div>';
+    animeGrid.innerHTML = '<div class="col-span-full text-center py-20 text-slate-400 font-medium animate-pulse">Loading catalog...</div>';
 
     try {
         const graphqlQuery = `
@@ -25,6 +21,7 @@ async function fetchAnime(searchQuery = '') {
                 Page (page: 1, perPage: 24) {
                     media (search: $search, status: RELEASING, type: ANIME, sort: POPULARITY_DESC) {
                         id
+                        idMal
                         title {
                             english
                             romaji
@@ -46,17 +43,17 @@ async function fetchAnime(searchQuery = '') {
         });
 
         const result = await response.json();
+        
         if (result.data && result.data.Page && result.data.Page.media) {
             displayAnime(result.data.Page.media);
         } else {
             throw new Error("No data found");
         }
     } catch (error) {
-        animeGrid.innerHTML = '<div class="col-span-full text-center text-rose-500 py-10">Failed to connect to database.</div>';
+        animeGrid.innerHTML = '<div class="col-span-full text-center text-rose-500 py-10">Failed to connect to database. Please check your internet connection.</div>';
     }
 }
 
-// 2. Display Catalog
 function displayAnime(animeList) {
     animeGrid.innerHTML = '';
     if (!animeList || animeList.length === 0) {
@@ -69,6 +66,8 @@ function displayAnime(animeList) {
         const imageUrl = anime.coverImage ? anime.coverImage.large : '';
         const score = anime.averageScore ? (anime.averageScore / 10).toFixed(1) : 'N/A';
         const episodes = anime.episodes ? `${anime.episodes} Eps` : 'Ongoing';
+        
+        const malId = anime.idMal || anime.id;
         const safeTitle = title.replace(/'/g, "\\'").replace(/"/g, '&quot;');
         
         animeGrid.innerHTML += `
@@ -80,8 +79,8 @@ function displayAnime(animeList) {
                 <div class="p-3">
                     <h3 class="text-sm font-bold text-slate-100 line-clamp-1 mb-1">${title}</h3>
                     <p class="text-xs text-slate-400 mb-3">Status: <span class="text-rose-400 font-medium">${episodes}</span></p>
-                    <button onclick="openPlayer(${anime.id}, '${safeTitle}')" class="block w-full bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold py-2.5 rounded-lg transition shadow">
-                        ▶ Extract & Play
+                    <button onclick="playAnime(${anime.id}, ${malId}, '${safeTitle}')" class="block w-full bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold py-2.5 rounded-lg transition shadow">
+                        ▶ Watch Video
                     </button>
                 </div>
             </div>
@@ -89,77 +88,62 @@ function displayAnime(animeList) {
     });
 }
 
-function openPlayer(id, title) {
-    currentAnilistId = id;
-    currentTitle = title;
-    if (epInput) epInput.value = 1;
+function playAnime(anilistId, malId, title) {
+    currentAnilistId = anilistId;
+    currentMalId = malId;
+    
+    if (modalTitle) modalTitle.innerText = `Streaming: ${title}`;
+    if (epInput) epInput.value = 1; 
+    
+    switchServer('vidlink');
     if (videoModal) videoModal.classList.remove('hidden');
-    loadEpisode();
 }
 
-// 3. Extract Video via Backend Proxy
-async function loadEpisode() {
-    const epNumber = parseInt(epInput.value) || 1;
-    if (modalTitle) modalTitle.innerText = `Streaming: ${currentTitle} (Ep ${epNumber})`;
-    
-    // Reset Player UI
-    if (hlsInstance) { hlsInstance.destroy(); }
-    nativePlayer.src = '';
-    nativePlayer.classList.add('hidden');
-    loadingStatus.classList.remove('hidden');
-    statusText.innerText = `Fetching Episode ${epNumber} via Proxy...`;
-
-    try {
-        // Step A: Fetch Episode ID using our Vercel Backend Proxy
-        const infoTarget = encodeURIComponent(`${BASE_CONSUMET_API}/info/${currentAnilistId}`);
-        const infoRes = await fetch(`/api/proxy?target=${infoTarget}`);
-        const infoStr = await infoRes.text();
-        const infoData = JSON.parse(infoStr);
-
-        const episode = infoData.episodes.find(e => e.number === epNumber) || infoData.episodes[epNumber - 1];
-        if (!episode) throw new Error("Episode not found in API.");
-
-        // Step B: Fetch Stream Links using our Vercel Backend Proxy
-        statusText.innerText = `Bypassing ISP to extract video...`;
-        const watchTarget = encodeURIComponent(`${BASE_CONSUMET_API}/watch/${episode.id}`);
-        const watchRes = await fetch(`/api/proxy?target=${watchTarget}`);
-        const watchStr = await watchRes.text();
-        const watchData = JSON.parse(watchStr);
-        
-        if (!watchData.sources || watchData.sources.length === 0) throw new Error("No video sources found.");
-
-        const source = watchData.sources.find(s => s.quality === '1080p' || s.quality === 'auto' || s.quality === 'default') || watchData.sources[0];
-        playNativeStream(source.url);
-
-    } catch (error) {
-        console.error(error);
-        statusText.innerText = "Error: Stream blocked or API offline. Try another anime.";
+function updateStream() {
+    if (currentAnilistId) {
+        switchServer(currentServer);
     }
 }
 
-// 4. Play Extracted Video
-function playNativeStream(streamUrl) {
-    loadingStatus.classList.add('hidden');
-    nativePlayer.classList.remove('hidden');
+function switchServer(serverName) {
+    currentServer = serverName;
+    const ep = epInput ? (epInput.value || 1) : 1;
+    
+    const btn1 = document.getElementById('btn-vidlink');
+    const btn2 = document.getElementById('btn-vidsrcin');
+    const btn3 = document.getElementById('btn-embedsu');
 
-    if (Hls.isSupported()) {
-        hlsInstance = new Hls();
-        hlsInstance.loadSource(streamUrl);
-        hlsInstance.attachMedia(nativePlayer);
-        hlsInstance.on(Hls.Events.MANIFEST_PARSED, function () {
-            nativePlayer.play();
-        });
-    } else if (nativePlayer.canPlayType('application/vnd.apple.mpegurl')) {
-        nativePlayer.src = streamUrl;
-        nativePlayer.play();
+    // Reset styles
+    [btn1, btn2, btn3].forEach(btn => {
+        if (btn) btn.className = 'px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition shrink-0';
+    });
+
+    let targetUrl = '';
+
+    // Route to the newest, most resilient proxy servers available
+    if (serverName === 'vidlink') {
+        targetUrl = `https://vidlink.pro/anime/${currentAnilistId}/${ep}`;
+        if (btn1) btn1.className = 'px-3 py-1.5 rounded-lg bg-rose-600 text-white font-semibold whitespace-nowrap transition shadow shrink-0';
+    } else if (serverName === 'vidsrcin') {
+        targetUrl = `https://vidsrc.in/embed/anime?anilist=${currentAnilistId}&ep=${ep}`;
+        if (btn2) btn2.className = 'px-3 py-1.5 rounded-lg bg-rose-600 text-white font-semibold whitespace-nowrap transition shadow shrink-0';
+    } else if (serverName === 'embedsu') {
+        targetUrl = `https://embed.su/embed/anime/${currentMalId}?episode=${ep}`;
+        if (btn3) btn3.className = 'px-3 py-1.5 rounded-lg bg-rose-600 text-white font-semibold whitespace-nowrap transition shadow shrink-0';
+    }
+
+    if (videoFrame) {
+        videoFrame.src = targetUrl;
+    }
+    
+    if (externalLinkBtn) {
+        externalLinkBtn.href = targetUrl;
     }
 }
 
 function closePlayer() {
-    if (hlsInstance) { hlsInstance.destroy(); }
-    nativePlayer.pause();
-    nativePlayer.src = '';
-    videoModal.classList.add('hidden');
+    if (videoFrame) videoFrame.src = '';
+    if (videoModal) videoModal.classList.add('hidden');
 }
 
 let searchTimer;
